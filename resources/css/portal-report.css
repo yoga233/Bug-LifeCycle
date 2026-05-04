@@ -1,0 +1,1209 @@
+    /* ═══════════════════════════════════════════════════════════════
+   PRANALA BLMS — Client Bug Report Form
+   Style: Enterprise Support Portal — Task / Form Page
+   Inherits variables dari portal-landing.css
+   ═══════════════════════════════════════════════════════════════ */
+
+    /* ── Page shell ── */
+    .report-page{
+    background: #f1f5f9; /* Ganti dari #f1f3f4 */
+    color: var(--tx);
+    }
+
+    .report-main{
+    padding-top:88px;
+    padding-bottom:clamp(56px,7vw,96px);
+    min-height:100svh;
+    }
+
+    #clientReportForm{
+    scroll-margin-top:96px;
+    }
+
+    .report-shell{
+    padding-top:clamp(16px,2.4vw,28px);
+    }
+
+    .report-flow{
+    max-width:740px;
+    margin:0 auto;
+    }
+
+    .report-form-stack{
+        display:grid;
+        gap:14px;
+        position:relative;
+        isolation:isolate;
+    }
+
+
+    /* ═══════════════════════════════════
+    CARD — Shared
+    ═══════════════════════════════════ */
+
+    .report-card{
+    position:relative;
+    background:#fff;
+    border:1px solid #dde1e7;
+    border-radius:12px;
+    overflow:visible;
+    box-shadow:
+        0 1px 2px rgba(15,23,42,.04),
+        0 4px 12px rgba(15,23,42,.04);
+    }
+
+    .report-card::before{
+    content:none;
+    }
+
+    /* Brand header card */
+    .report-card-brand{
+    background:var(--p);
+    border-color:var(--p);
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:
+        0 2px 4px rgba(15,23,42,.06),
+        0 8px 20px rgba(var(--primary-rgb),.12);
+    }
+
+    .report-card-brand::before{
+    content:'';
+    position:absolute;
+    inset:0 0 auto 0;
+    height:3px;
+    background:rgba(255,255,255,.22);
+    }
+
+    .report-card-brand-inner{
+    padding:clamp(24px,4vw,36px) clamp(22px,4vw,32px);
+    }
+
+    /* Section card */
+    .report-card-section{
+        position:relative;
+        overflow:visible;
+        z-index:1;
+    }
+
+    .report-card-section:focus-within{
+        z-index:40;
+    }
+
+    .report-card-section .report-card-body{
+    position:relative;
+    overflow:visible;
+    }
+
+    .report-card-body{
+    padding:22px 24px;
+    }
+
+
+    /* ═══════════════════════════════════
+    BRAND HEADER TYPOGRAPHY
+    ═══════════════════════════════════
+    Konteks: judul form di atas halaman
+    Tujuan: establish purpose dengan jelas,
+    bukan showcase typography
+    */
+
+    .report-card-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:var(--ff-mono);
+    font-size:10px;
+    font-weight:var(--fw-medium);
+    letter-spacing:var(--ls-label);
+    text-transform:uppercase;
+    color:rgba(255,255,255,.78);
+    line-height:1;
+    }
+
+    .report-card-kicker::before{
+    content:'';
+    width:14px;
+    height:1.5px;
+    border-radius:999px;
+    background:rgba(255,255,255,.60);
+    flex-shrink:0;
+    }
+
+    /* Form title — sans, direct, no drama */
+    .report-card-title{
+    margin-top:12px;
+    font-family:var(--ff-sans);
+    font-size:clamp(20px,3.2vw,26px);
+    font-weight:var(--fw-bold);
+    line-height:1.18;
+    letter-spacing:-.02em;
+    color:#fff;
+    max-width:26ch;
+    }
+
+    /* Subtitle — readable, not decorative */
+    .report-card-subtitle{
+    margin-top:10px;
+    font-family:var(--ff-sans);
+    font-size:14px;
+    line-height:1.72;
+    color:rgba(255,255,255,.80);
+    font-weight:var(--fw-regular);
+    max-width:58ch;
+    }
+
+    /* Meta list — form guidance */
+    .report-card-meta{
+    margin-top:18px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 18px;
+    padding-top:16px;
+    border-top:1px solid rgba(255,255,255,.16);
+    }
+
+    .report-card-meta-item{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:var(--ff-sans);
+    font-size:12px;
+    font-weight:var(--fw-medium);
+    line-height:1.5;
+    color:rgba(255,255,255,.74);
+    }
+
+    .report-card-meta-dot{
+    width:5px;
+    height:5px;
+    border-radius:999px;
+    background:rgba(255,255,255,.64);
+    flex-shrink:0;
+    }
+
+
+    /* ═══════════════════════════════════
+    SECTION TITLE
+    ═══════════════════════════════════
+    Konteks: judul per-section dalam form
+    Tujuan: grouping yang jelas, bukan heading artikel
+    */
+
+    .report-section-title{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:var(--ff-sans);
+    font-size:13px;
+    font-weight:var(--fw-semibold);
+    letter-spacing:.01em;
+    text-transform:uppercase;
+    color:var(--tx-3);
+    margin-bottom:18px;
+    line-height:1;
+    }
+
+    .report-section-title::before{
+    content:'';
+    width:3px;
+    height:14px;
+    border-radius:2px;
+    background:var(--p);
+    flex-shrink:0;
+    }
+
+
+    /* ═══════════════════════════════════
+    FORM GRID & FIELD SHELL
+    ═══════════════════════════════════ */
+
+    .report-field-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:18px;
+    }
+
+    .report-field-full{
+    grid-column:1 / -1;
+    }
+
+    .report-field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    min-width:0;
+    }
+
+
+    /* ═══════════════════════════════════
+    FIELD LABEL
+    ═══════════════════════════════════
+    Tujuan: identifikasi field dengan jelas
+    Tidak perlu terlalu bold — cukup semibold
+    */
+
+    .report-field-label{
+    font-family:var(--ff-sans);
+    font-size:13px;
+    font-weight:var(--fw-semibold);
+    color:var(--tx);
+    letter-spacing:-.005em;
+    line-height:1.4;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    }
+
+    .report-required-mark{
+    color:var(--p);
+    font-weight:var(--fw-bold);
+    font-size:14px;
+    line-height:1;
+    }
+
+
+    /* ═══════════════════════════════════
+    FIELD HINT
+    ═══════════════════════════════════
+    Tujuan: panduan pengisian, bukan dekorasi
+    Harus cukup kontras untuk dibaca
+    */
+
+    .report-field-hint{
+    font-family:var(--ff-sans);
+    font-size:12px;
+    line-height:1.6;
+    color:var(--tx-3);
+    font-weight:var(--fw-regular);
+    }
+
+
+    /* ═══════════════════════════════════
+    FIELD ERROR
+    ═══════════════════════════════════ */
+
+    .report-field-error{
+    font-family:var(--ff-sans);
+    font-size:12px;
+    font-weight:var(--fw-semibold);
+    line-height:1.5;
+    color:#be123c;
+    }
+
+
+    /* ═══════════════════════════════════
+    INPUTS
+    ═══════════════════════════════════
+    Font size 14px — tidak terlalu kecil,
+    tidak terlalu besar untuk form field
+    */
+
+    .report-field-input{
+    font-family:var(--ff-sans);
+    font-size:14px;
+    font-weight:var(--fw-regular);
+    color:var(--tx);
+    min-height:42px;
+    border:1px solid #dde1e7;
+    background:#fff;
+    border-radius:8px;
+    padding:0 14px;
+    transition:border-color .15s ease,box-shadow .15s ease;
+    line-height:1.5;
+    }
+
+    .report-field-input::placeholder{
+    color:#9aa5b4;
+    font-weight:var(--fw-regular);
+    }
+
+    .report-field-input:hover{
+    border-color:#c1c7d0;
+    }
+
+    .report-field-input:focus{
+    border-color:var(--p);
+    box-shadow:0 0 0 3px rgba(var(--primary-rgb),.10);
+    outline:none;
+    background:#fff;
+    }
+
+    .report-field-input-normal{
+    border-color:#dde1e7;
+    }
+
+    .report-field-input-error{
+    border-color:#be123c;
+    background:#fff8f9;
+    }
+
+    .report-field-input-error:hover{
+    border-color:#9f1239;
+    }
+
+    .report-field-input-error:focus{
+    border-color:#be123c;
+    box-shadow:0 0 0 3px rgba(190,18,60,.10);
+    }
+
+    textarea.report-field-input{
+    resize:vertical;
+    min-height:100px;
+    padding:10px 14px;
+    line-height:var(--lh-body);
+    }
+
+
+    /* ═══════════════════════════════════
+    SELECT WRAPPER
+    ═══════════════════════════════════ */
+
+    .report-select-wrapper{
+        position:relative;
+        z-index:1;
+    }
+
+    .report-select-wrapper:focus-within{
+        z-index:60;
+    }
+
+    .report-select-wrapper [x-data]{
+        position:relative;
+        z-index:1;
+    }
+
+    .report-select-wrapper [x-data] > button{
+        position:relative;
+        z-index:2;
+        height:42px;
+        border-radius:8px;
+        border:1px solid #dde1e7;
+        background:#fff;
+        color:var(--tx);
+        font-family:var(--ff-sans);
+        font-size:14px;
+        font-weight:var(--fw-regular);
+        transition:border-color .15s ease,box-shadow .15s ease;
+        text-align:left;
+        padding:0 14px;
+        width:100%;
+    }
+
+    .report-select-wrapper [x-data] > button:hover{
+    border-color:#c1c7d0;
+    }
+
+    .report-select-wrapper [x-data] > button:focus{
+    border-color:var(--p);
+    box-shadow:0 0 0 3px rgba(var(--primary-rgb),.10);
+    outline:none;
+    }
+
+    .report-select-wrapper-error [x-data] > button{
+    border-color:#be123c;
+    background:#fff8f9;
+    }
+
+    .report-select-wrapper-error [x-data] > button:focus{
+    border-color:#be123c;
+    box-shadow:0 0 0 3px rgba(190,18,60,.10);
+    }
+
+    .report-select-wrapper [x-data] .absolute,
+    .report-select-wrapper [x-data] .absolute.z-50{
+        margin-top:4px;
+        border-radius:8px;
+        border:1px solid #e2e8f0;
+        background:#fff;
+        box-shadow:0 6px 16px rgba(15,23,42,.10);
+        overflow:hidden;
+        z-index:70 !important;
+    }
+
+    .report-select-wrapper [x-data] .max-h-64 button{
+    font-family:var(--ff-sans);
+    font-size:14px;
+    font-weight:var(--fw-regular);
+    color:var(--tx-2);
+    }
+
+    .report-select-wrapper [x-data] .max-h-64 button:hover{
+    background:rgba(var(--primary-rgb),.04);
+    color:var(--p);
+    }
+
+
+    /* ═══════════════════════════════════
+    FILE INPUT
+    ═══════════════════════════════════ */
+
+    .report-file-input{
+    width:100%;
+    border-radius:8px;
+    border:1px solid #dde1e7;
+    padding:6px;
+    font-family:var(--ff-sans);
+    font-size:13px;
+    color:var(--tx-2);
+    background:#fff;
+    }
+
+    .report-file-input:focus{
+    border-color:var(--p);
+    box-shadow:0 0 0 3px rgba(var(--primary-rgb),.10);
+    outline:none;
+    }
+
+    .report-file-input::file-selector-button{
+    margin-right:12px;
+    border:0;
+    border-radius:6px;
+    background:rgba(var(--primary-rgb),.07);
+    color:var(--p);
+    padding:7px 12px;
+    font-family:var(--ff-sans);
+    font-size:12px;
+    font-weight:var(--fw-semibold);
+    cursor:pointer;
+    transition:background .15s ease;
+    }
+
+    .report-file-input::file-selector-button:hover{
+    background:rgba(var(--primary-rgb),.11);
+    }
+
+    .report-file-input.report-field-input-error{
+    border-color:#be123c;
+    background:#fff8f9;
+    }
+
+
+    /* ═══════════════════════════════════
+    DROPZONE
+    ═══════════════════════════════════ */
+
+    .report-upload-dropzone{
+    position:relative;
+    border:2px dashed #dde1e7;
+    border-radius:10px;
+    background:#fafbfc;
+    min-height:130px;
+    padding:20px;
+    cursor:pointer;
+    transition:border-color .15s ease,background-color .15s ease;
+    }
+
+    .report-upload-dropzone:hover{
+    border-color:var(--p);
+    background:rgba(var(--primary-rgb),.02);
+    }
+
+    .report-upload-dropzone:focus-visible{
+    outline:none;
+    border-color:var(--p);
+    box-shadow:0 0 0 3px rgba(var(--primary-rgb),.10);
+    }
+
+    .report-upload-dropzone.is-dragging{
+    border-color:var(--p);
+    background:rgba(var(--primary-rgb),.04);
+    }
+
+    .report-upload-dropzone.report-upload-dropzone-error{
+    border-color:#be123c;
+    background:#fff8f9;
+    }
+
+    .report-upload-empty-state{
+    min-height:90px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    text-align:center;
+    }
+
+    .report-upload-empty-icon{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:40px;
+    height:40px;
+    border-radius:999px;
+    background:rgba(var(--primary-rgb),.07);
+    color:var(--p);
+    }
+
+    /* Upload area text */
+    .report-upload-empty-title{
+    font-family:var(--ff-sans);
+    font-size:14px;
+    font-weight:var(--fw-semibold);
+    color:var(--tx-2);
+    line-height:1.4;
+    }
+
+    .report-upload-empty-subtitle{
+    font-family:var(--ff-mono);
+    font-size:11px;
+    color:var(--tx-4);
+    letter-spacing:.04em;
+    line-height:1.4;
+    }
+
+    .report-upload-dropzone.has-files .report-upload-empty-state{
+    display:none;
+    }
+
+
+    /* ═══════════════════════════════════
+    ATTACHMENT PREVIEW
+    ═══════════════════════════════════ */
+
+    .report-attachment-preview-shell{
+    margin-top:14px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    background:#fff;
+    padding:14px 16px;
+    }
+
+    .report-attachment-preview-head{
+    display:grid;
+    gap:4px;
+    margin-bottom:12px;
+    }
+
+    .report-attachment-preview-head-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    }
+
+    /* Preview section title */
+    .report-attachment-preview-title{
+    font-family:var(--ff-sans);
+    font-size:13px;
+    font-weight:var(--fw-semibold);
+    color:var(--tx);
+    line-height:1.4;
+    }
+
+    .report-attachment-add-btn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+    }
+
+    .report-attachment-preview-list{
+    display:grid;
+    gap:10px;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    }
+
+    .report-preview-list-item{
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+    background:#fff;
+    padding:10px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    }
+
+    .report-preview-list-thumb{
+    width:48px;
+    height:48px;
+    object-fit:cover;
+    border-radius:6px;
+    border:1px solid #e2e8f0;
+    background:#f1f3f4;
+    flex-shrink:0;
+    }
+
+    .report-preview-list-info{
+    min-width:0;
+    flex:1;
+    display:grid;
+    gap:2px;
+    }
+
+    /* File name in preview */
+    .report-preview-list-name{
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-family:var(--ff-sans);
+    font-size:13px;
+    font-weight:var(--fw-semibold);
+    color:var(--tx);
+    line-height:1.4;
+    }
+
+    /* File size in preview */
+    .report-preview-list-size{
+    font-family:var(--ff-mono);
+    font-size:11px;
+    color:var(--tx-4);
+    letter-spacing:.02em;
+    }
+
+    .report-preview-list-actions{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-shrink:0;
+    }
+
+
+    /* ═══════════════════════════════════
+    PREVIEW BUTTONS
+    ═══════════════════════════════════ */
+
+    .report-preview-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    border-radius:6px;
+    border:1px solid transparent;
+    padding:6px 10px;
+    font-family:var(--ff-sans);
+    font-size:11px;
+    font-weight:var(--fw-semibold);
+    transition:border-color .15s ease,background-color .15s ease,color .15s ease;
+    line-height:1;
+    }
+
+    .report-preview-btn svg{
+    width:12px;
+    height:12px;
+    flex-shrink:0;
+    }
+
+    .report-preview-btn-annotate{
+    border-color:rgba(var(--primary-rgb),.18);
+    background:rgba(var(--primary-rgb),.05);
+    color:var(--p);
+    }
+
+    .report-preview-btn-annotate:hover{
+    background:rgba(var(--primary-rgb),.09);
+    border-color:rgba(var(--primary-rgb),.26);
+    }
+
+    .report-preview-btn-solid{
+    border-color:var(--p);
+    background:var(--p);
+    color:#fff;
+    }
+
+    .report-preview-btn-solid:hover{
+    background:var(--p-dk);
+    border-color:var(--p-dk);
+    }
+
+    .report-preview-btn-ghost{
+    border-color:#dde1e7;
+    background:#fff;
+    color:var(--tx-2);
+    }
+
+    .report-preview-btn-ghost:hover{
+    border-color:#c1c7d0;
+    background:#f8fafc;
+    color:var(--tx);
+    }
+
+    .report-preview-btn-danger{
+    border-color:rgba(190,18,60,.18);
+    background:#fff8f9;
+    color:#be123c;
+    }
+
+    .report-preview-btn-danger:hover{
+    border-color:rgba(190,18,60,.28);
+    background:#fff1f5;
+    color:#9f1239;
+    }
+
+    .report-preview-list-annotate-btn,
+    .report-preview-list-remove-btn{
+    padding:6px 8px;
+    }
+
+    .report-preview-list-remove-btn span{
+    display:none;
+    }
+
+    .report-preview-btn-remove{
+    min-width:28px;
+    min-height:28px;
+    padding:0;
+    border-radius:999px;
+    border:1px solid rgba(190,18,60,.18);
+    background:#fff8f9;
+    color:#be123c;
+    font-size:14px;
+    line-height:1;
+    }
+
+    .report-preview-btn-remove:hover{
+    background:#fff1f5;
+    }
+
+
+    /* ═══════════════════════════════════
+    ANNOTATION WORKSPACE
+    ═══════════════════════════════════ */
+
+    .report-annotation-shell{
+    margin-top:14px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    overflow:visible;
+    background:#fff;
+    }
+
+    .report-annotation-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 14px;
+    border-bottom:1px solid #e2e8f0;
+    background:#fafbfc;
+    border-radius:10px 10px 0 0;
+    }
+
+    .report-annotation-file{
+    min-width:0;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    }
+
+    .report-annotation-file-icon{
+    width:28px;
+    height:28px;
+    border-radius:6px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(var(--primary-rgb),.07);
+    color:var(--p);
+    border:1px solid rgba(var(--primary-rgb),.14);
+    flex-shrink:0;
+    }
+
+    /* Annotation file name */
+    .report-annotation-file-label{
+    min-width:0;
+    display:inline-block;
+    max-width:clamp(140px,28vw,400px);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-family:var(--ff-sans);
+    font-size:13px;
+    font-weight:var(--fw-semibold);
+    color:var(--tx-2);
+    line-height:1.4;
+    }
+
+    .report-annotation-close-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    border-radius:6px;
+    border:1px solid #dde1e7;
+    background:#fff;
+    color:var(--tx-3);
+    padding:6px 10px;
+    font-family:var(--ff-sans);
+    font-size:11px;
+    font-weight:var(--fw-semibold);
+    transition:border-color .15s ease,color .15s ease,background-color .15s ease;
+    line-height:1;
+    }
+
+    .report-annotation-close-btn:hover{
+    border-color:#c1c7d0;
+    color:var(--tx);
+    background:#f8fafc;
+    }
+
+    /* Toolbar */
+    .report-annotation-toolbar{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    padding:8px 14px;
+    border-bottom:1px solid #e2e8f0;
+    background:#fff;
+    flex-wrap:wrap;
+    }
+
+    .report-annotation-toolbar-group{
+    display:flex;
+    align-items:center;
+    gap:2px;
+    }
+
+    .report-annotation-toolbar-divider{
+    width:1px;
+    height:18px;
+    background:#e2e8f0;
+    margin:0 4px;
+    }
+
+    /* Tool buttons */
+    .report-annotation-tool-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:30px;
+    height:30px;
+    border-radius:6px;
+    color:var(--tx-3);
+    border:1px solid transparent;
+    background:#fff;
+    cursor:pointer;
+    transition:background .15s ease,color .15s ease,border-color .15s ease;
+    }
+
+    .report-annotation-tool-btn:hover{
+    background:rgba(var(--primary-rgb),.04);
+    border-color:rgba(var(--primary-rgb),.14);
+    color:var(--p);
+    }
+
+    .report-annotation-tool-btn.is-active{
+    background:var(--p);
+    border-color:var(--p);
+    color:#fff;
+    }
+
+    .report-annotation-tool-btn-danger{
+    color:#be123c;
+    }
+
+    .report-annotation-tool-btn-danger:hover{
+    color:#9f1239;
+    border-color:rgba(190,18,60,.22);
+    background:#fff8f9;
+    }
+
+    /* Disabled state */
+    .report-annotation-tool-btn:disabled,
+    .report-annotation-color-btn:disabled,
+    #annotationSave:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+    pointer-events:none;
+    }
+
+    /* Color dots */
+    .report-annotation-color-btn{
+    width:18px;
+    height:18px;
+    border-radius:999px;
+    border:2px solid rgba(255,255,255,.94);
+    cursor:pointer;
+    box-shadow:0 0 0 1px rgba(0,0,0,.12);
+    transition:transform .12s ease,box-shadow .12s ease;
+    }
+
+    .report-annotation-color-btn:hover{
+    transform:scale(1.1);
+    }
+
+    .report-annotation-color-btn.is-active{
+    box-shadow:0 0 0 2px var(--p);
+    transform:scale(1.1);
+    }
+
+    /* Status bar */
+    .report-annotation-status{
+    font-family:var(--ff-mono);
+    font-size:11px;
+    letter-spacing:.02em;
+    padding:7px 14px;
+    min-height:32px;
+    border-bottom:1px solid #e2e8f0;
+    color:var(--tx-4);
+    line-height:1.5;
+    }
+
+    .report-annotation-status.is-success{
+    color:#065f46;
+    }
+
+    .report-annotation-status.is-danger{
+    color:#be123c;
+    }
+
+    .report-annotation-canvas{
+    width:100%;
+    background:#f0f2f5;
+    line-height:0;
+    }
+
+
+    /* ═══════════════════════════════════
+    SUBMIT CARD
+    ═══════════════════════════════════ */
+
+    .report-card-body-submit{
+    display:grid;
+    gap:16px;
+    }
+
+    /* Confirmation text sebelum submit */
+    .report-submit-note{
+    font-family:var(--ff-sans);
+    font-size:13px;
+    line-height:1.72;
+    color:var(--tx-3);
+    font-weight:var(--fw-regular);
+    max-width:56ch;
+    }
+
+    .report-submit-actions{
+    display:flex;
+    justify-content:flex-end;
+    }
+
+    .report-submit-btn{
+    height:40px;
+    border-radius:8px;
+    padding:0 24px;
+    font-family:var(--ff-sans);
+    font-weight:var(--fw-semibold);
+    font-size:14px;
+    letter-spacing:.01em;
+    }
+
+    .report-submit-btn:hover{
+    background:var(--p-dk);
+    }
+
+
+    /* ═══════════════════════════════════
+    ALERT
+    ═══════════════════════════════════ */
+
+    .report-alert{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    max-width:740px;
+    margin:0 auto 16px;
+    border-radius:10px;
+    border:1px solid #e2e8f0;
+    background:#fff;
+    padding:12px 14px;
+    }
+
+    .report-alert-danger{
+    border-color:rgba(190,18,60,.20);
+    background:#fff8f9;
+    }
+
+    .report-alert-warning{
+    border-color:rgba(217,119,6,.22);
+    background:#fffaf3;
+    }
+
+    .report-alert-icon{
+    margin-top:2px;
+    display:inline-flex;
+    width:28px;
+    height:28px;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    flex-shrink:0;
+    }
+
+    .report-alert-danger .report-alert-icon{
+    background:rgba(190,18,60,.09);
+    color:#be123c;
+    }
+
+    .report-alert-warning .report-alert-icon{
+    background:rgba(217,119,6,.09);
+    color:#b45309;
+    }
+
+    /* Alert message text */
+    .report-alert-subtitle{
+    margin-top:1px;
+    font-family:var(--ff-sans);
+    font-size:13px;
+    line-height:1.65;
+    color:var(--tx-2);
+    font-weight:var(--fw-regular);
+    }
+
+
+    /* ═══════════════════════════════════
+    TASK FOOTER
+    ═══════════════════════════════════ */
+
+    .task-footer{
+    border-top:1px solid #e2e8f0;
+    background:#fff;
+    padding:18px 0;
+    }
+
+    .task-footer-inner{
+    max-width:740px;
+    margin:0 auto;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:0 var(--px);
+    }
+
+    /* Copyright text */
+    .task-footer-copy{
+    font-family:var(--ff-mono);
+    font-size:11px;
+    color:var(--tx-4);
+    letter-spacing:.03em;
+    }
+
+    .task-footer-links{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px 12px;
+    }
+
+    /* Footer links */
+    .task-footer-links a{
+    font-family:var(--ff-sans);
+    font-size:12px;
+    font-weight:var(--fw-medium);
+    color:var(--tx-3);
+    transition:color .15s ease;
+    }
+
+    .task-footer-links a:hover{
+    color:var(--p);
+    }
+
+    .task-footer-links span[aria-hidden="true"]{
+    color:#d1d5db;
+    font-size:12px;
+    user-select:none;
+    }
+
+
+    /* ═══════════════════════════════════
+    RESPONSIVE
+    ═══════════════════════════════════ */
+
+    @media(max-width:640px){
+    .report-field-grid{
+        grid-template-columns:1fr;
+    }
+
+    .report-card-brand-inner,
+    .report-card-body{
+        padding:18px 16px;
+    }
+
+    .report-card-title{
+        font-size:clamp(18px,5.5vw,22px);
+        max-width:none;
+    }
+
+    .report-submit-actions{
+        justify-content:stretch;
+    }
+
+    .report-submit-btn{
+        width:100%;
+        justify-content:center;
+    }
+
+    .report-attachment-preview-shell{
+        padding:12px 14px;
+    }
+
+    .report-preview-list-item{
+        align-items:flex-start;
+    }
+
+    .report-preview-list-actions{
+        flex-direction:column;
+    }
+
+    .report-preview-list-annotate-btn,
+    .report-preview-list-remove-btn{
+        width:100%;
+        justify-content:center;
+    }
+
+    .report-preview-list-remove-btn span{
+        display:inline;
+    }
+
+    .report-annotation-head{
+        padding:10px 12px;
+        flex-wrap:wrap;
+        gap:8px;
+    }
+
+    .report-annotation-close-btn span{
+        display:none;
+    }
+
+    .report-annotation-toolbar{
+        padding:8px 12px;
+        gap:3px;
+    }
+
+    .task-footer-inner{
+        flex-direction:column;
+        text-align:center;
+        gap:8px;
+    }
+    }
+
+    @media(max-width:480px){
+    .report-main{
+        padding-top:80px;
+    }
+
+    .report-card-body{
+        padding:16px 14px;
+    }
+
+    .report-form-stack{
+        gap:10px;
+    }
+
+    .report-section-title{
+        font-size:12px;
+    }
+    }
+
+    @media(prefers-reduced-motion:reduce){
+    .report-field-input,
+    .report-upload-dropzone,
+    .report-preview-btn,
+    .report-annotation-tool-btn,
+    .report-annotation-color-btn{
+        transition:none;
+    }
+    }

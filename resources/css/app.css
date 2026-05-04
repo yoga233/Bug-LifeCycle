@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply font-ui text-slate-800 antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-heading text-slate-900 tracking-tight;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+        @apply font-ui;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        @apply text-slate-400;
+        opacity: 1;
+    }
+
+    [role='tooltip'] {
+        @apply font-ui text-xs leading-relaxed tracking-normal;
+    }
+
+    [role='alert'] {
+        @apply font-ui text-sm leading-6;
+    }
+}
+
+@layer components {
+    .ui-text-display {
+        @apply font-heading text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900;
+    }
+
+    .ui-text-page-title {
+        @apply font-heading text-2xl md:text-3xl font-semibold tracking-tight text-slate-900;
+    }
+
+    .ui-text-section-title {
+        @apply font-heading text-xl md:text-2xl font-semibold tracking-tight text-slate-900;
+    }
+
+    .ui-text-heading {
+        @apply font-heading text-lg md:text-xl font-semibold tracking-tight text-slate-900;
+    }
+
+    .ui-text-subheading {
+        @apply font-ui text-sm md:text-base font-medium text-slate-600;
+    }
+
+    .ui-text-body {
+        @apply font-ui text-sm md:text-base leading-6 text-slate-700;
+    }
+
+    .ui-text-paragraph {
+        @apply font-ui text-sm md:text-base leading-7 text-slate-600;
+    }
+
+    .ui-text-caption {
+        @apply font-ui text-xs leading-5 text-slate-500;
+    }
+
+    .ui-text-label {
+        @apply font-ui text-xs md:text-sm font-medium leading-5 text-slate-600;
+    }
+
+    .ui-text-overline {
+        @apply font-ui text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+    }
+
+    .ui-text-tooltip {
+        @apply font-ui text-xs leading-relaxed text-slate-700;
+    }
+
+    .ui-text-alert-title {
+        @apply font-heading text-sm font-semibold tracking-tight;
+    }
+
+    .ui-text-alert-message {
+        @apply font-ui text-sm leading-6;
+    }
+
+    .ui-text-placeholder {
+        @apply font-ui text-sm text-slate-400;
+    }
+
+    .ui-text-link {
+        @apply font-ui text-sm font-medium text-blue-700 hover:text-blue-800;
+    }
+
+    .ui-text-mono {
+        @apply font-mono text-xs text-slate-600;
+    }
+
+    .ui-brand-wordmark {
+        @apply font-brand font-extrabold tracking-tight leading-tight;
+    }
+
+    .ui-brand-tagline {
+        @apply font-ui text-[11px] leading-tight tracking-[0.01em] text-slate-500;
+    }
+}
+
+/* Flatpickr overrides (PM UI consistency)
+   Keep it minimal & aligned with Tailwind form controls.
+*/
+.flatpickr-calendar {
+    border: 1px solid rgb(226 232 240); /* slate-200 */
+    border-radius: 0.75rem; /* rounded-xl */
+    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.08);
+}
+
+.flatpickr-months {
+    padding: 0.5rem 0.5rem 0.25rem;
+}
+
+.flatpickr-current-month {
+    font-weight: 600;
+    color: rgb(15 23 42); /* slate-900 */
+}
+
+.flatpickr-weekdays {
+    padding: 0 0.5rem;
+}
+
+.flatpickr-weekday {
+    color: rgb(100 116 139); /* slate-500 */
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.flatpickr-day {
+    border-radius: 0.75rem;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: rgb(37 99 235); /* blue-600 */
+    border-color: rgb(37 99 235);
+}
+
+.flatpickr-day.today {
+    border-color: rgb(147 197 253); /* blue-300 */
+}
+
+.flatpickr-day:hover {
+    background: rgb(241 245 249); /* slate-100 */
+    border-color: rgb(241 245 249);
+}
+
+:focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+}
