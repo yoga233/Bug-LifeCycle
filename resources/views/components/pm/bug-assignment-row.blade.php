@@ -4,6 +4,7 @@
     $hasPriority = (bool) $bug->priority_id;
     $reportedAt  = $bug->created_at?->locale('id')->diffForHumans();
     $reportedAt  = $reportedAt ? str_replace(' yang lalu', ' lalu', $reportedAt) : null;
+    $ticket      = $bug->ticket ?? sprintf('#BUG-%06d', $bug->id);
 @endphp
 
 <div class="group px-5 py-5 transition-colors duration-150 hover:bg-[rgba(138,11,78,0.022)]">
@@ -12,20 +13,14 @@
         {{-- ══ Informasi Tiket ══ --}}
         <div class="min-w-0 flex-1">
 
-            {{-- Baris 1: ID + Prioritas + Proyek --}}
+            {{-- Baris 1: Ticket + Priority --}}
             <div class="flex flex-wrap items-center gap-1.5">
                 <span class="font-mono text-[10px] font-medium tracking-[0.06em] text-slate-400">
-                    Tiket #{{ $bug->id }}
+                    {{ $ticket }}
                 </span>
 
                 @if ($bug->priority)
                     <x-priority-badge :priority="$bug->priority" />
-                @endif
-
-                @if ($bug->project?->name)
-                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-500">
-                        {{ $bug->project->name }}
-                    </span>
                 @endif
             </div>
 
@@ -37,8 +32,21 @@
                 {{ $bug->title }}
             </h4>
 
-            {{-- Baris 3: Pelapor + Waktu --}}
+            {{-- Baris 3: Meta --}}
             <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+
+                @if ($bug->project?->name)
+                    <span class="inline-flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="1.75"
+                             class="h-3.5 w-3.5 text-slate-400" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                        </svg>
+                        <span>{{ $bug->project->name }}</span>
+                    </span>
+                @endif
+
                 <span class="inline-flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="1.75"
@@ -115,7 +123,7 @@
                     @submit="
                         if (submitting) { $event.preventDefault(); return; }
                         if (!assigneeId) { $event.preventDefault(); return; }
-                        if (!confirm('Tugaskan tiket #{{ $bug->id }} ke ' + (assigneeName || 'programmer terpilih') + '?')) {
+                        if (!confirm('Tugaskan tiket {{ $ticket }} ke ' + (assigneeName || 'programmer terpilih') + '?')) {
                             $event.preventDefault(); return;
                         }
                         submitting = true;

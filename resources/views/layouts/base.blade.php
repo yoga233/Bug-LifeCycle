@@ -7,6 +7,9 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
+        <style>
+    html { overflow-y: scroll; }
+</style>
         @include('layouts.partials.head', ['title' => trim($__env->yieldContent('title', config('app.name', 'DevPanel')))])
     </head>
 

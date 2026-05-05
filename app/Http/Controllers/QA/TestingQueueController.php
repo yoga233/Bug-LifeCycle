@@ -18,7 +18,6 @@ class TestingQueueController extends Controller
                 'priority_id',
                 'guest_name',
                 'title',
-                'description',
                 'status',
                 'created_at',
             ])
@@ -29,28 +28,33 @@ class TestingQueueController extends Controller
             ])
             ->where('status', 'Testing')
             ->latest()
-            ->paginate(20)
-            ->withQueryString();
+            ->get();
 
-        // Direct query without caching - let database indexes handle performance
+        $twoDaysAgo = now()->subDays(2);
+
         $summary = Bug::query()
-            ->selectRaw('COUNT(*) as total_bugs')
-            ->selectRaw("SUM(CASE WHEN status IN ('Reported','Assigned','In Progress','Testing') THEN 1 ELSE 0 END) as active_count")
-            ->selectRaw("SUM(CASE WHEN status = 'Testing' THEN 1 ELSE 0 END) as testing_count")
-            ->selectRaw("SUM(CASE WHEN status IN ('Resolved','Closed') THEN 1 ELSE 0 END) as resolved_count")
+            ->leftJoin('priorities', 'bugs.priority_id', '=', 'priorities.id')
+            ->leftJoin('severities', 'bugs.severity_id', '=', 'severities.id')
+            ->selectRaw("SUM(CASE WHEN bugs.status = 'Testing' THEN 1 ELSE 0 END) as waiting_count")
+            ->selectRaw("SUM(CASE WHEN bugs.status = 'Testing' 
+                AND (UPPER(COALESCE(priorities.level, '')) IN ('URGENT','HIGH') 
+                     OR UPPER(COALESCE(severities.level, '')) IN ('CRITICAL','MAJOR')) 
+                THEN 1 ELSE 0 END) as attention_count")
+            ->selectRaw("SUM(CASE WHEN bugs.status = 'Testing' AND bugs.created_at <= ? THEN 1 ELSE 0 END) as stalled_count", [$twoDaysAgo])
+            ->selectRaw("SUM(CASE WHEN bugs.status = 'Rejected' THEN 1 ELSE 0 END) as rejected_count")
             ->first();
 
-        $totalBugs = (int) ($summary->total_bugs ?? 0);
-        $activeCount = (int) ($summary->active_count ?? 0);
-        $testingCount = (int) ($summary->testing_count ?? 0);
-        $resolvedCount = (int) ($summary->resolved_count ?? 0);
+        $waitingCount   = (int) ($summary->waiting_count ?? 0);
+        $attentionCount = (int) ($summary->attention_count ?? 0);
+        $stalledCount   = (int) ($summary->stalled_count ?? 0);
+        $rejectedCount  = (int) ($summary->rejected_count ?? 0);
 
         return view('panel.qa.testing-queue', compact(
             'bugs',
-            'totalBugs',
-            'activeCount',
-            'testingCount',
-            'resolvedCount',
+            'waitingCount',
+            'attentionCount',
+            'stalledCount',
+            'rejectedCount',
         ));
     }
 }

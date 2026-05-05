@@ -43,10 +43,10 @@ class DashboardController extends Controller
             ->orderByDesc('updated_at');
 
         $tasks = $tasksQuery
-            ->paginate(15);
+            ->get();
 
         // Add computed SLA due_at for rendering (keep as view-only attribute)
-        $tasks->getCollection()->transform(function (Bug $bug) {
+        $tasks->transform(function (Bug $bug) {
             $sla = $bug->priority?->sla_hours;
             $bug->due_at = $sla ? $bug->created_at->copy()->addHours($sla) : null;
 
