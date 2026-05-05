@@ -1,67 +1,88 @@
 {{-- resources/views/panel/project-manager/issues/show.blade.php --}}
 @extends('layouts.project-manager')
 
-@section('title', 'Detail Bug')
+@section('title', 'Detail Tiket')
 
 @section('content')
     @php
-        // Back behavior
+        /*
+        |--------------------------------------------------------------------------
+        | Back behavior + breadcrumb dinamis
+        |--------------------------------------------------------------------------
+        */
         $currentUrl = url()->current();
-        $rawReturn = (string) request()->query('return', '');
-
-        $appHost = parse_url(config('app.url'), PHP_URL_HOST);
+        $rawReturn  = (string) request()->query('return', '');
+        $appHost    = parse_url(config('app.url'), PHP_URL_HOST);
 
         $isSafeReturn = false;
         if ($rawReturn !== '') {
-            $returnHost = parse_url($rawReturn, PHP_URL_HOST);
-            $returnScheme = parse_url($rawReturn, PHP_URL_SCHEME);
+            $decoded      = urldecode($rawReturn);
+            $returnHost   = parse_url($decoded, PHP_URL_HOST);
+            $returnScheme = parse_url($decoded, PHP_URL_SCHEME);
 
-            if ($returnScheme === null && $returnHost === null && str_starts_with($rawReturn, '/')) {
+            if ($returnScheme === null && $returnHost === null && str_starts_with($decoded, '/')) {
                 $isSafeReturn = true;
             }
-
             if (! $isSafeReturn && $returnHost && $appHost && $returnHost === $appHost) {
                 $isSafeReturn = true;
             }
-
-            if ($isSafeReturn && $rawReturn === $currentUrl) {
+            if ($isSafeReturn && rtrim($decoded, '/') === rtrim($currentUrl, '/')) {
                 $isSafeReturn = false;
             }
         }
 
-        $backUrl = $isSafeReturn ? $rawReturn : url()->previous();
-        if ($backUrl === $currentUrl) {
-            $backUrl = route('pm.issues.index');
+        $backUrl = $isSafeReturn ? urldecode($rawReturn) : route('pm.dashboard');
+
+        $returnLabel = 'Dashboard';
+        if ($backUrl) {
+            if (str_contains($backUrl, 'kinerja')) {
+                $returnLabel = 'Riwayat Kinerja';
+            } elseif (str_contains($backUrl, 'issues')) {
+                $returnLabel = 'Semua Tiket';
+            } elseif (str_contains($backUrl, 'management')) {
+                $returnLabel = 'Manajemen';
+            } elseif (str_contains($backUrl, 'notifications')) {
+                $returnLabel = 'Notifikasi';
+            } elseif (str_contains($backUrl, 'dashboard')) {
+                $returnLabel = 'Dashboard';
+            }
         }
 
-        $canAssign = in_array($bug->status, ['Reported', 'Assigned'], true);
+        $canAssign       = in_array($bug->status, ['Reported', 'Assigned'], true);
         $canEditPriority = $bug->status === 'Reported';
 
-        // Split "Langkah Reproduksi" from description
-        $rawDescription = (string) ($bug->description ?? '');
-        $marker = 'Langkah Reproduksi:';
-        $descriptionText = $rawDescription;
+        /*
+        |--------------------------------------------------------------------------
+        | Split deskripsi + langkah reproduksi
+        |--------------------------------------------------------------------------
+        */
+        $rawDescription    = (string) ($bug->description ?? '');
+        $marker            = 'Langkah Reproduksi:';
+        $descriptionText   = $rawDescription;
         $reproductionSteps = '';
 
         if (str_contains($rawDescription, $marker)) {
             [$descPart, $reproPart] = array_pad(explode($marker, $rawDescription, 2), 2, '');
-            $descriptionText = trim($descPart);
+            $descriptionText   = trim($descPart);
             $reproductionSteps = trim($reproPart);
         }
 
-        // Parse SLA info from title
-        $rawTitle = (string) ($bug->title ?? '');
-        $titleDisplay = $rawTitle;
-        $titleSuffix = '';
+        /*
+        |--------------------------------------------------------------------------
+        | Parse SLA dari title
+        |--------------------------------------------------------------------------
+        */
+        $rawTitle         = (string) ($bug->title ?? '');
+        $titleDisplay     = $rawTitle;
+        $titleSuffix      = '';
         $titleSuffixClass = 'text-slate-400';
 
         if (preg_match('/\s*-\s*(SLA\s+(?:Terlambat|Tepat|Terlewat)[^-]*?)(?:\s*-\s*|$)/iu', $rawTitle, $m)) {
-            $titleSuffix = trim((string) $m[1]);
+            $titleSuffix  = trim((string) $m[1]);
             $titleDisplay = trim(str_replace($m[0], ' - ', $rawTitle), ' -');
             $titleDisplay = preg_replace('/\s*-\s*-\s*/', ' - ', $titleDisplay);
             $titleDisplay = trim((string) $titleDisplay, ' -');
-
-            $titleSuffix = preg_replace('/^SLA\s+/iu', '', $titleSuffix);
+            $titleSuffix  = preg_replace('/^SLA\s+/iu', '', $titleSuffix);
 
             $suffixLower = mb_strtolower($titleSuffix);
             if (str_contains($suffixLower, 'terlambat') || str_contains($suffixLower, 'terlewat')) {
@@ -71,76 +92,60 @@
             }
         }
 
-        $ticketLabel = $ticket ?? ($bug->ticket ?? sprintf('#BUG-%06d', $bug->id));
+        $ticketLabel = $bug->ticket ?? sprintf('BUG-%06d', $bug->id);
 
-        // Breadcrumb label (DINAMIS — jangan diubah)
-        $returnLabel = 'Dashboard';
-        if ($backUrl) {
-            if (str_contains($backUrl, 'kinerja')) {
-                $returnLabel = 'Riwayat Kinerja';
-            } elseif (str_contains($backUrl, 'issues')) {
-                $returnLabel = 'Manajemen Bug';
-            } elseif (str_contains($backUrl, 'management')) {
-                $returnLabel = 'Manajemen';
-            } elseif (str_contains($backUrl, 'dashboard')) {
-                $returnLabel = 'Dashboard';
-            }
-        }
-
-        // Timeline helpers
+        /*
+        |--------------------------------------------------------------------------
+        | Timeline helpers
+        |--------------------------------------------------------------------------
+        */
         $timelineKey = fn ($s) => str($s)->lower()->replace(' ', '_')->toString();
 
         $timelineLabel = fn ($s) => match ($s) {
-            'reported'     => 'Dilaporkan',
-            'assigned'     => 'Ditugaskan',
-            'in_progress'  => 'Dalam Pengerjaan',
-            'testing'      => 'Pengujian',
-            'resolved'     => 'Diselesaikan',
-            'closed'       => 'Ditutup',
-            'rejected'     => 'Dikembalikan QA',
-            default        => ucfirst(str_replace('_', ' ', (string) $s)),
+            'reported'    => 'Dilaporkan',
+            'assigned'    => 'Ditugaskan',
+            'in_progress' => 'Dalam Pengerjaan',
+            'testing'     => 'Pengujian',
+            'resolved'    => 'Diselesaikan',
+            'closed'      => 'Ditutup',
+            'rejected'    => 'Dikembalikan QA',
+            default       => ucfirst(str_replace('_', ' ', (string) $s)),
         };
 
         $timelineDot = fn ($s) => match ($s) {
-            'reported'     => 'bg-amber-500',
-            'assigned'     => 'bg-sky-500',
-            'in_progress'  => 'bg-blue-500',
-            'testing'      => 'bg-violet-500',
-            'resolved'     => 'bg-emerald-500',
-            'closed'       => 'bg-slate-500',
-            'rejected'     => 'bg-rose-500',
-            default        => 'bg-slate-300',
+            'reported'    => 'bg-amber-500',
+            'assigned'    => 'bg-sky-500',
+            'in_progress' => 'bg-blue-500',
+            'testing'     => 'bg-violet-500',
+            'resolved'    => 'bg-emerald-500',
+            'closed'      => 'bg-slate-500',
+            'rejected'    => 'bg-rose-500',
+            default       => 'bg-slate-300',
         };
 
         $timelineLine = fn ($s) => match ($s) {
-            'reported'     => 'bg-amber-200',
-            'assigned'     => 'bg-sky-200',
-            'in_progress'  => 'bg-blue-200',
-            'testing'      => 'bg-violet-200',
-            'resolved'     => 'bg-emerald-200',
-            'closed'       => 'bg-slate-200',
-            'rejected'     => 'bg-rose-200',
-            default        => 'bg-slate-200',
+            'reported'    => 'bg-amber-200',
+            'assigned'    => 'bg-sky-200',
+            'in_progress' => 'bg-blue-200',
+            'testing'     => 'bg-violet-200',
+            'resolved'    => 'bg-emerald-200',
+            'closed'      => 'bg-slate-200',
+            'rejected'    => 'bg-rose-200',
+            default       => 'bg-slate-200',
         };
 
         $histories = ($bug->statusHistories ?? collect())->sortBy('changed_at')->values();
+        $events    = collect();
 
-        $events = collect();
         $events->push([
             'status' => $histories->first()?->old_status ?? $bug->status,
             'at'     => $bug->created_at,
         ]);
         foreach ($histories as $h) {
-            $events->push([
-                'status' => $h->new_status,
-                'at'     => $h->changed_at,
-            ]);
+            $events->push(['status' => $h->new_status, 'at' => $h->changed_at]);
         }
         if (($events->last()['status'] ?? null) !== $bug->status) {
-            $events->push([
-                'status' => $bug->status,
-                'at'     => $bug->updated_at,
-            ]);
+            $events->push(['status' => $bug->status, 'at' => $bug->updated_at]);
         }
         $events = $events->unique('status')->values();
     @endphp
@@ -155,31 +160,31 @@
                 canAssign: @js($canAssign),
                 canEditPriority: @js($canEditPriority),
                 initialPriority: @js($bug->priority ? [
-                    'id' => $bug->priority->id,
-                    'level' => $bug->priority->level,
-                    'sla_hours' => $bug->priority->sla_hours,
-                    'bg_color' => $bug->priority->bg_color,
+                    'id'         => $bug->priority->id,
+                    'level'      => $bug->priority->level,
+                    'sla_hours'  => $bug->priority->sla_hours,
+                    'bg_color'   => $bug->priority->bg_color,
                     'text_color' => $bug->priority->text_color,
                 ] : null),
                 initialAssigneeName: @js($bug->assignee?->name ?? '—'),
                 initialBug: @js([
-                    'id' => $bug->id,
-                    'title' => $titleDisplay,
-                    'ticket' => $ticketLabel,
-                    'status' => $bug->status,
+                    'id'          => $bug->id,
+                    'title'       => $titleDisplay,
+                    'ticket'      => $ticketLabel,
+                    'status'      => $bug->status,
                     'assignee_id' => $bug->assignee_id,
                 ]),
             }),
 
             statusLabelUi(status) {
                 const map = {
-                    'Reported': 'Dilaporkan',
-                    'Assigned': 'Ditugaskan',
+                    'Reported':    'Dilaporkan',
+                    'Assigned':    'Ditugaskan',
                     'In Progress': 'Dalam Pengerjaan',
-                    'Testing': 'Pengujian',
-                    'Resolved': 'Diselesaikan',
-                    'Closed': 'Ditutup',
-                    'Rejected': 'Dikembalikan QA',
+                    'Testing':     'Pengujian',
+                    'Resolved':    'Diselesaikan',
+                    'Closed':      'Ditutup',
+                    'Rejected':    'Dikembalikan QA',
                 };
                 return map[status] || status || '-';
             },
@@ -207,10 +212,9 @@
              ============================================================ --}}
         <div class="mb-8">
 
-            {{-- Breadcrumb: DINAMIS --}}
             <nav class="mb-4 flex items-center gap-1.5" aria-label="Breadcrumb">
                 <a
-                    href="{{ $backUrl ?: route('pm.dashboard') }}"
+                    href="{{ $backUrl }}"
                     class="text-xs text-slate-400 transition-colors hover:text-[#8a0b4e]"
                 >
                     {{ $returnLabel }}
@@ -223,29 +227,30 @@
                           clip-rule="evenodd" />
                 </svg>
 
-                <span class="text-xs font-medium text-slate-600" aria-current="page">Detail Bug</span>
+                <span class="text-xs font-medium text-slate-600" aria-current="page">Detail Tiket</span>
             </nav>
 
-            {{-- Title & badges --}}
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
-                {{-- Left --}}
+                {{-- Kiri --}}
                 <div class="min-w-0">
-                    <div class="mb-1.5 flex flex-wrap items-center gap-1.5">
-                        <span class="font-mono text-[10px] font-semibold tracking-[0.06em] text-slate-400">
+                    <div class="mb-2 flex flex-wrap items-center gap-2">
+                        <span class="font-mono text-[11px] font-semibold tracking-[0.08em] text-slate-700">
                             {{ $ticketLabel }}
                         </span>
 
                         @if ($bug->project?->name)
-                            <span class="inline-flex items-center rounded-full border border-slate-200/80 bg-slate-50/80 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+                            <span class="inline-flex items-center rounded-full border border-slate-300/80 bg-slate-50 px-2.5 py-0.5 text-[10px] font-medium text-slate-600">
                                 {{ $bug->project->name }}
                             </span>
                         @endif
 
-                        <x-severity-badge :severity="$bug->severity" class="px-2 py-0.5 text-[10px] font-semibold" />
+                        @if ($bug->severity)
+                            <x-severity-badge :severity="$bug->severity" class="px-2 py-0.5 text-[10px] font-semibold" />
+                        @endif
                     </div>
 
-                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">
+                    <h1 class="text-2xl font-semibold tracking-tight text-slate-800 sm:text-[28px]">
                         <span>{{ $titleDisplay }}</span>
                         @if ($titleSuffix !== '')
                             <span class="ml-1.5 text-sm font-medium {{ $titleSuffixClass }}">
@@ -254,12 +259,12 @@
                         @endif
                     </h1>
 
-                    <p class="mt-2 text-sm leading-relaxed text-slate-500">
-                        Tinjau laporan, tetapkan prioritas, dan kelola penugasan programmer sesuai status bug.
+                    <p class="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500">
+                        Tinjau laporan, tetapkan prioritas, dan tugaskan programmer yang akan menangani tiket ini.
                     </p>
                 </div>
 
-                {{-- Right --}}
+                {{-- Kanan --}}
                 <div class="flex flex-wrap items-center gap-2">
                     <span
                         class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold"
@@ -295,32 +300,42 @@
             <div class="space-y-6 lg:col-span-2">
 
                 {{-- Laporan --}}
-                <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+                <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div class="border-b border-slate-100 px-6 py-5">
-                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Laporan</p>
-                        <p class="mt-1 text-sm font-medium text-slate-900">Detail Laporan</p>
-                        <p class="mt-1 text-sm text-slate-500">Informasi yang dibutuhkan untuk analisa dan penugasan.</p>
+                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
+                            Laporan
+                        </p>
+                        <p class="mt-1 text-sm font-semibold text-slate-800">Detail Laporan</p>
+                        <p class="mt-1 text-sm text-slate-500">
+                            Informasi utama yang dibutuhkan untuk analisa, penugasan, dan tindak lanjut.
+                        </p>
                     </div>
 
                     <div class="space-y-6 px-6 py-5">
-
-                        {{-- Deskripsi --}}
                         <div>
-                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Deskripsi</p>
-                            <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">{{ $descriptionText }}</p>
+                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">
+                                Deskripsi
+                            </p>
+                            <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                                {{ $descriptionText }}
+                            </p>
                         </div>
 
-                        {{-- Langkah Reproduksi --}}
                         @if ($reproductionSteps !== '')
                             <div class="border-t border-slate-100 pt-5">
-                                <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Langkah Reproduksi</p>
-                                <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">{{ $reproductionSteps }}</p>
+                                <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">
+                                    Langkah Reproduksi
+                                </p>
+                                <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                                    {{ $reproductionSteps }}
+                                </p>
                             </div>
                         @endif
 
-                        {{-- Lampiran --}}
                         <div class="border-t border-slate-100 pt-5">
-                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Lampiran</p>
+                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">
+                                Lampiran
+                            </p>
 
                             <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 @forelse ($bug->attachments as $file)
@@ -334,7 +349,7 @@
                                     <a
                                         href="{{ $publicUrl ?? '#' }}"
                                         @if ($publicUrl) target="_blank" rel="noopener" @endif
-                                        class="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 transition-colors duration-200 hover:border-[rgba(138,11,78,0.20)] hover:bg-[rgba(138,11,78,0.01)]"
+                                        class="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition-colors duration-150 hover:border-[rgba(138,11,78,0.18)] hover:bg-[rgba(138,11,78,0.01)]"
                                         title="{{ $fileName }}"
                                     >
                                         <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
@@ -366,11 +381,15 @@
                 </section>
 
                 {{-- Komentar --}}
-                <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+                <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div class="border-b border-slate-100 px-6 py-5">
-                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Diskusi</p>
-                        <p class="mt-1 text-sm font-medium text-slate-900">Komentar</p>
-                        <p class="mt-1 text-sm text-slate-500">Diskusi internal terkait bug ini.</p>
+                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
+                            Diskusi
+                        </p>
+                        <p class="mt-1 text-sm font-semibold text-slate-800">Komentar</p>
+                        <p class="mt-1 text-sm text-slate-500">
+                            Diskusi internal antara PM, Programmer, dan QA terkait tiket ini.
+                        </p>
                     </div>
 
                     <div class="px-6 py-5">
@@ -380,11 +399,11 @@
                                     postUrl: '{{ route('pm.issues.comments.store', $bug) }}',
                                     csrf: '{{ csrf_token() }}',
                                     initialComments: {{ $bug->comments->map(fn($c) => [
-                                        'id' => $c->id,
-                                        'content' => $c->content,
-                                        'user_name' => $c->user?->name,
+                                        'id'           => $c->id,
+                                        'content'      => $c->content,
+                                        'user_name'    => $c->user?->name,
                                         'user_initial' => strtoupper(substr($c->user?->name ?? 'U', 0, 1)),
-                                        'created_at' => $c->created_at?->timezone(config('app.timezone'))?->format('d M Y, H:i'),
+                                        'created_at'   => $c->created_at?->timezone(config('app.timezone'))?->format('d M Y, H:i'),
                                     ])->values()->toJson() }},
                                 }),
                                 showEmptyAlert: false,
@@ -396,7 +415,7 @@
                                     <p class="text-sm text-slate-400">
                                         Belum ada komentar.
                                         <a href="#comment-form" class="font-medium text-slate-600 underline-offset-2 transition-colors hover:text-[#8a0b4e] hover:underline">
-                                            Tulis yang pertama.
+                                            Tulis komentar pertama.
                                         </a>
                                     </p>
                                 </div>
@@ -412,7 +431,7 @@
 
                                     <div class="min-w-0 flex-1">
                                         <div class="mb-1.5 flex flex-wrap items-center gap-2">
-                                            <span class="text-sm font-medium text-slate-900" x-text="g.user_name"></span>
+                                            <span class="text-sm font-medium text-slate-800" x-text="g.user_name"></span>
                                             <span class="text-xs text-slate-400" x-text="g.created_at"></span>
                                         </div>
 
@@ -444,18 +463,13 @@
                                         name="content"
                                         rows="3"
                                         class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-300 transition-colors duration-150 focus:border-[rgba(138,11,78,0.35)] focus:outline-none focus:ring-2 focus:ring-[rgba(138,11,78,0.10)]"
-                                        placeholder="Tulis konteks, update, atau keputusan untuk tim…"
+                                        placeholder="Tulis konteks, keputusan, atau update untuk tim…"
                                         x-model="content"
                                         :disabled="submitting"
                                         x-on:input="if (content.trim()) showEmptyAlert = false"
                                     ></textarea>
 
-                                    <p
-                                        class="text-xs text-rose-500"
-                                        x-show="showEmptyAlert"
-                                        x-transition.opacity
-                                        x-cloak
-                                    >
+                                    <p class="text-xs text-rose-500" x-show="showEmptyAlert" x-transition.opacity x-cloak>
                                         Kolom komentar wajib diisi sebelum mengirim.
                                     </p>
 
@@ -466,22 +480,19 @@
 
                                         <button
                                             type="button"
-                                            class="inline-flex h-9 items-center justify-center rounded-xl px-5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
+                                            class="inline-flex h-8 items-center justify-center rounded-lg px-4 text-xs font-semibold text-white transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
                                             :class="submitting
-                                                ? 'cursor-not-allowed bg-slate-300 text-white/80'
-                                                : 'bg-[#8a0b4e] text-white hover:bg-[#6d0940]'"
+                                                ? 'cursor-not-allowed bg-slate-300'
+                                                : 'bg-[#8a0b4e] hover:bg-[#6d0940]'"
                                             :disabled="submitting"
                                             x-on:click="
-                                                if (!content.trim()) {
-                                                    showEmptyAlert = true;
-                                                    return;
-                                                }
+                                                if (!content.trim()) { showEmptyAlert = true; return; }
                                                 showEmptyAlert = false;
                                                 submit();
                                             "
                                         >
                                             <span x-show="!submitting">Kirim Komentar</span>
-                                            <span x-show="submitting">Mengirim...</span>
+                                            <span x-show="submitting" x-cloak>Mengirim…</span>
                                         </button>
                                     </div>
                                 </form>
@@ -495,49 +506,51 @@
             <div class="space-y-6">
 
                 {{-- Ringkasan --}}
-                <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+                <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div class="border-b border-slate-100 px-6 py-5">
-                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Info</p>
-                        <p class="mt-1 text-sm font-medium text-slate-900">Ringkasan</p>
+                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
+                            Info
+                        </p>
+                        <p class="mt-1 text-sm font-semibold text-slate-800">Ringkasan</p>
                     </div>
 
                     <div class="divide-y divide-slate-100">
                         <div class="px-6 py-4">
-                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Reporter</p>
-                            <p class="mt-1.5 text-sm font-medium text-slate-900">{{ $bug->guest_name }}</p>
+                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Pelapor</p>
+                            <p class="mt-1.5 text-sm font-medium text-slate-800">{{ $bug->guest_name }}</p>
                             <p class="mt-0.5 text-xs text-slate-400">{{ $bug->guest_email }}</p>
                         </div>
 
                         <div class="px-6 py-4">
-                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Versi</p>
-                            <p class="mt-1.5 text-sm font-medium text-slate-900">{{ $bug->guest_version ?: '—' }}</p>
+                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Versi Aplikasi</p>
+                            <p class="mt-1.5 text-sm font-medium text-slate-800">{{ $bug->guest_version ?: '—' }}</p>
                         </div>
 
                         <div class="px-6 py-4">
                             <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Dilaporkan Pada</p>
-                            <p class="mt-1.5 text-sm font-medium text-slate-900">{{ $bug->created_at?->format('d M Y, H:i') ?? '—' }}</p>
+                            <p class="mt-1.5 text-sm font-medium text-slate-800">{{ $bug->created_at?->format('d M Y, H:i') ?? '—' }}</p>
                         </div>
                     </div>
                 </section>
 
                 {{-- Prioritas --}}
-                <section class="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+                <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div class="border-b border-slate-100 px-6 py-5">
-                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Prioritas</p>
-                        <p class="mt-1 text-sm font-medium text-slate-900">Penetapan Prioritas</p>
+                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
+                            Prioritas
+                        </p>
+                        <p class="mt-1 text-sm font-semibold text-slate-800">Penetapan Prioritas</p>
                         <p class="mt-1 text-sm text-slate-500">
                             <template x-if="canEditPriority">
-                                <span>Status masih Dilaporkan. PM dapat menetapkan atau mengubah prioritas.</span>
+                                <span>Tiket masih berstatus Dilaporkan. Tetapkan prioritas sebelum melakukan penugasan.</span>
                             </template>
                             <template x-if="!canEditPriority">
-                                <span>Prioritas dikunci karena bug sudah berjalan.</span>
+                                <span>Prioritas dikunci karena tiket sudah dalam tahap pengerjaan.</span>
                             </template>
                         </p>
                     </div>
 
                     <div class="space-y-4 px-6 py-5">
-
-                        {{-- Prioritas saat ini --}}
                         <div>
                             <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Prioritas Saat Ini</p>
                             <div class="mt-1.5 flex items-center gap-2">
@@ -561,7 +574,6 @@
                             </div>
                         </div>
 
-                        {{-- Form update prioritas --}}
                         <form
                             method="POST"
                             action="{{ route('pm.issues.priority.update', $bug) }}"
@@ -592,7 +604,7 @@
                                 <button
                                     type="button"
                                     @click="if (canEditPriority && !prioritySubmitting) open = !open"
-                                    class="inline-flex h-10 w-full items-center justify-between gap-2 rounded-xl border bg-white px-3 text-sm transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.25)] focus-visible:ring-offset-1"
+                                    class="inline-flex h-9 w-full items-center justify-between gap-2 rounded-lg border bg-white px-3 text-xs transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.25)] focus-visible:ring-offset-1"
                                     :class="[
                                         (!canEditPriority || prioritySubmitting) ? 'cursor-not-allowed opacity-50 border-slate-200' : '',
                                         open ? 'border-[rgba(138,11,78,0.35)] ring-2 ring-[rgba(138,11,78,0.10)]' : 'border-slate-200 hover:border-[rgba(138,11,78,0.20)] hover:bg-[rgba(138,11,78,0.02)]',
@@ -605,12 +617,11 @@
                                         x-text="selectedLabel"
                                     ></span>
 
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                         class="h-3.5 w-3.5 shrink-0 text-slate-300 transition-transform duration-150"
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         class="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform duration-150"
                                          :class="open ? 'rotate-180 text-[#8a0b4e]' : ''" aria-hidden="true">
-                                        <path fill-rule="evenodd"
-                                              d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0l-4.25-4.51a.75.75 0 0 1 .02-1.06Z"
-                                              clip-rule="evenodd" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                                     </svg>
                                 </button>
 
@@ -623,14 +634,14 @@
                                     x-transition:leave="transition duration-100 ease-in"
                                     x-transition:leave-start="opacity-100 translate-y-0"
                                     x-transition:leave-end="opacity-0 -translate-y-1"
-                                    class="absolute left-0 top-12 z-50 w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/[0.06]"
+                                    class="absolute left-0 top-11 z-50 w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/[0.06]"
                                 >
                                     <div class="max-h-52 overflow-y-auto">
                                         <template x-for="item in items" :key="item.value">
                                             <button
                                                 type="button"
                                                 @click="priorityId = item.value; open = false"
-                                                class="flex w-full items-center rounded-lg px-2.5 py-2 text-left text-sm transition-colors duration-100"
+                                                class="flex w-full items-center rounded-lg px-2.5 py-2 text-left text-xs transition-colors duration-100"
                                                 :class="String(priorityId) === item.value
                                                     ? 'bg-[rgba(138,11,78,0.06)] font-semibold text-[#8a0b4e]'
                                                     : 'text-slate-700 hover:bg-[rgba(138,11,78,0.04)] hover:text-[#8a0b4e]'"
@@ -644,17 +655,17 @@
 
                             <button
                                 type="submit"
-                                class="inline-flex h-9 w-full items-center justify-center rounded-xl text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
+                                class="inline-flex h-8 w-full items-center justify-center rounded-lg text-xs font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
                                 :disabled="!canEditPriority || !priorityId || prioritySubmitting"
                                 :class="(!canEditPriority || !priorityId || prioritySubmitting)
                                     ? 'cursor-not-allowed bg-slate-200 text-slate-400'
                                     : 'bg-[#8a0b4e] text-white hover:bg-[#6d0940]'"
                             >
-                                <span x-text="priority ? 'Update Prioritas' : 'Tetapkan Prioritas'"></span>
+                                <span x-text="priority ? 'Perbarui Prioritas' : 'Tetapkan Prioritas'"></span>
                             </button>
 
                             <p class="text-xs text-slate-400" x-show="!canEditPriority" style="display:none">
-                                Prioritas dikunci — status bug sudah
+                                Prioritas dikunci — tiket sudah berstatus
                                 <span class="font-medium text-slate-600" x-text="statusLabelUi(bug.status)"></span>.
                             </p>
                         </form>
@@ -662,32 +673,31 @@
                 </section>
 
                 {{-- Penugasan --}}
-                <section class="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+                <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div class="border-b border-slate-100 px-6 py-5">
-                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Penugasan</p>
-                        <p class="mt-1 text-sm font-medium text-slate-900">Programmer</p>
+                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
+                            Penugasan
+                        </p>
+                        <p class="mt-1 text-sm font-semibold text-slate-800">Programmer</p>
                         <p class="mt-1 text-sm text-slate-500">
                             <template x-if="bug.status === 'Reported'">
-                                <span>Pilih programmer untuk memulai penugasan pertama.</span>
+                                <span>Pilih programmer untuk memulai penugasan. Pastikan prioritas sudah ditetapkan terlebih dahulu.</span>
                             </template>
                             <template x-if="bug.status === 'Assigned'">
-                                <span>Bug sudah ditugaskan. Kamu masih bisa memindahkannya ke programmer lain.</span>
+                                <span>Tiket sudah ditugaskan. Kamu masih bisa memindahkan ke programmer lain jika diperlukan.</span>
                             </template>
                             <template x-if="!['Reported', 'Assigned'].includes(bug.status)">
-                                <span>Penugasan dikunci karena bug sudah masuk tahap pengerjaan.</span>
+                                <span>Penugasan dikunci karena tiket sudah dalam tahap pengerjaan.</span>
                             </template>
                         </p>
                     </div>
 
                     <div class="space-y-4 px-6 py-5">
-
-                        {{-- Assignee saat ini --}}
                         <div>
-                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">{{ __('labels.assignee') }}</p>
-                            <p class="mt-1.5 text-sm font-medium text-slate-900" x-text="assigneeName"></p>
+                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Penanggung Jawab</p>
+                            <p class="mt-1.5 text-sm font-medium text-slate-800" x-text="assigneeName"></p>
                         </div>
 
-                        {{-- Form assign --}}
                         <form
                             id="pm-assign-form"
                             method="POST"
@@ -698,13 +708,12 @@
                         >
                             @csrf
 
-                            {{-- Warning prioritas --}}
                             <p
-                                class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700"
+                                class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700"
                                 x-show="bug.status === 'Reported' && !priority"
                                 style="display:none"
                             >
-                                Tentukan prioritas terlebih dahulu sebelum menugaskan programmer.
+                                Tetapkan prioritas terlebih dahulu sebelum menugaskan programmer.
                             </p>
 
                             <div
@@ -712,8 +721,8 @@
                                     open: false,
                                     q: '',
                                     items: @js($programmers->map(fn($d) => [
-                                        'value' => (string) $d->id,
-                                        'label' => $d->name,
+                                        'value'   => (string) $d->id,
+                                        'label'   => $d->name,
                                         'initial' => strtoupper(mb_substr($d->name, 0, 1)),
                                     ])->values()),
                                     get filtered() {
@@ -742,23 +751,22 @@
                                 <button
                                     type="button"
                                     @click="if (canAssign) open = !open"
-                                    class="inline-flex h-10 w-full items-center justify-between gap-2 rounded-xl border bg-white px-3 text-sm transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.25)] focus-visible:ring-offset-1"
+                                    class="inline-flex h-9 w-full items-center justify-between gap-2 rounded-lg border bg-white px-2.5 text-xs transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.25)] focus-visible:ring-offset-1"
                                     :class="open
                                         ? 'border-[rgba(138,11,78,0.35)] ring-2 ring-[rgba(138,11,78,0.10)]'
                                         : 'border-slate-200 hover:border-[rgba(138,11,78,0.20)] hover:bg-[rgba(138,11,78,0.02)]'"
                                 >
                                     <span
                                         class="truncate"
-                                        :class="assigneeId ? 'font-medium text-slate-800' : 'text-slate-400'"
+                                        :class="assigneeId ? 'font-medium text-slate-700' : 'text-slate-400'"
                                         x-text="selectedLabel"
                                     ></span>
 
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                         class="h-3.5 w-3.5 shrink-0 text-slate-300 transition-transform duration-150"
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         class="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform duration-150"
                                          :class="open ? 'rotate-180 text-[#8a0b4e]' : ''" aria-hidden="true">
-                                        <path fill-rule="evenodd"
-                                              d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0l-4.25-4.51a.75.75 0 0 1 .02-1.06Z"
-                                              clip-rule="evenodd" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                                     </svg>
                                 </button>
 
@@ -771,15 +779,14 @@
                                     x-transition:leave="transition duration-100 ease-in"
                                     x-transition:leave-start="opacity-100 translate-y-0"
                                     x-transition:leave-end="opacity-0 -translate-y-1"
-                                    class="absolute left-0 top-12 z-50 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-900/[0.06]"
+                                    class="absolute left-0 top-11 z-50 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-900/[0.06]"
                                 >
-                                    {{-- Search --}}
                                     <template x-if="items.length > 5">
                                         <div class="border-b border-slate-100 p-1.5">
                                             <input
                                                 type="text"
                                                 x-model="q"
-                                                placeholder="Cari programmer..."
+                                                placeholder="Cari programmer…"
                                                 class="h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-[rgba(138,11,78,0.35)] focus:outline-none focus:ring-2 focus:ring-[rgba(138,11,78,0.10)]"
                                             />
                                         </div>
@@ -790,7 +797,7 @@
                                             <button
                                                 type="button"
                                                 @click="pick(item)"
-                                                class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors duration-100"
+                                                class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs transition-colors duration-100"
                                                 :class="String(assigneeId) === item.value
                                                     ? 'bg-[rgba(138,11,78,0.06)] font-semibold text-[#8a0b4e]'
                                                     : 'text-slate-700 hover:bg-[rgba(138,11,78,0.04)] hover:text-[#8a0b4e]'"
@@ -808,19 +815,21 @@
 
                                         <div x-show="filtered.length === 0"
                                              class="px-2.5 py-3 text-center text-xs text-slate-400">
-                                            Tidak ditemukan
+                                            Programmer tidak ditemukan
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <template x-if="bug.status === 'Assigned' && assigneeName !== '—'">
-                                <p class="text-xs text-slate-400">Bug ini akan dipindahkan ke programmer yang dipilih.</p>
+                                <p class="text-xs text-slate-400">
+                                    Tiket akan dipindahkan ke programmer yang dipilih.
+                                </p>
                             </template>
 
                             <button
                                 type="submit"
-                                class="inline-flex h-9 w-full items-center justify-center rounded-xl text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
+                                class="inline-flex h-8 w-full items-center justify-center rounded-lg text-xs font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
                                 :disabled="!assigneeId || submitting || (bug.status === 'Reported' && !priority)"
                                 :class="(!assigneeId || submitting || (bug.status === 'Reported' && !priority))
                                     ? 'cursor-not-allowed bg-slate-200 text-slate-400'
@@ -830,13 +839,11 @@
                             </button>
                         </form>
 
-                        {{-- Locked state --}}
                         <p class="text-xs text-slate-400" x-show="!canAssign" style="display:none">
-                            Penugasan dikunci — status bug sudah
+                            Penugasan dikunci — tiket sudah berstatus
                             <span class="font-medium text-slate-600" x-text="statusLabelUi(bug.status)"></span>.
                         </p>
 
-                        {{-- Unassign --}}
                         <form
                             id="pm-unassign-form"
                             method="POST"
@@ -850,7 +857,6 @@
                             <button
                                 type="submit"
                                 class="text-xs font-medium text-rose-500 transition-colors hover:text-rose-700"
-                                title="Penugasan akan dibatalkan dan status bug dikembalikan ke Dilaporkan"
                             >
                                 Batalkan Penugasan
                             </button>
@@ -859,10 +865,12 @@
                 </section>
 
                 {{-- Timeline --}}
-                <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+                <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div class="border-b border-slate-100 px-6 py-5">
-                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Riwayat</p>
-                        <p class="mt-1 text-sm font-medium text-slate-900">Status Timeline</p>
+                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
+                            Riwayat
+                        </p>
+                        <p class="mt-1 text-sm font-semibold text-slate-800">Status Timeline</p>
                     </div>
 
                     <div class="px-6 py-5">
@@ -877,21 +885,21 @@
                                 </div>
 
                                 <div class="min-w-0 flex-1 {{ $loop->last ? 'pb-0' : 'pb-4' }}">
-                                    <p class="text-sm font-medium text-slate-900">{{ $timelineLabel($statusKey) }}</p>
+                                    <p class="text-sm font-medium text-slate-800">{{ $timelineLabel($statusKey) }}</p>
                                     <p class="mt-0.5 text-xs text-slate-400">
                                         {{ $e['at']?->format('d M Y, H:i') ?? '—' }}
                                     </p>
                                 </div>
                             </div>
                         @empty
-                            <p class="text-sm text-slate-400">Belum ada histori.</p>
+                            <p class="text-sm text-slate-500">Belum ada riwayat perubahan status.</p>
                         @endforelse
                     </div>
                 </section>
             </div>
         </div>
 
-        {{-- Confirm Modal: Assign / Reassign --}}
+        {{-- Modal: Konfirmasi Penugasan --}}
         <x-pm.modal-confirm
             name="pm-confirm-assignment"
             :show="false"
@@ -899,10 +907,10 @@
             x-data="{ assigneeName: '', actionLabel: 'Tugaskan', ticket: '', bugTitle: '', submitting: false }"
             x-on:pm-open-assignment-confirm.window="
                 assigneeName = $event.detail?.assigneeName || '';
-                actionLabel = $event.detail?.actionLabel || 'Tugaskan';
-                ticket = $event.detail?.ticket || '';
-                bugTitle = $event.detail?.bugTitle || '';
-                submitting = false;
+                actionLabel  = $event.detail?.actionLabel  || 'Tugaskan';
+                ticket       = $event.detail?.ticket       || '';
+                bugTitle     = $event.detail?.bugTitle     || '';
+                submitting   = false;
                 $dispatch('open-modal', 'pm-confirm-assignment');
             "
             x-on:pm-assignment-finished.window="submitting = false"
@@ -913,12 +921,12 @@
 
             <x-slot:description>
                 <span class="block text-sm text-slate-500">
-                    <span class="font-medium text-slate-900" x-text="ticket"></span>
+                    <span class="font-medium text-slate-800" x-text="ticket"></span>
                     <span class="text-slate-300">·</span>
                     <span x-text="bugTitle"></span>
                 </span>
                 <span class="mt-2 block text-sm text-slate-500">
-                    Programmer tujuan: <span class="font-medium text-slate-900" x-text="assigneeName || '—'"></span>
+                    Programmer tujuan: <span class="font-medium text-slate-800" x-text="assigneeName || '—'"></span>
                 </span>
                 <span class="mt-2 block text-sm text-slate-500">Lanjutkan proses ini?</span>
             </x-slot:description>
@@ -926,7 +934,7 @@
             <div class="mt-6 flex justify-end gap-2">
                 <button
                     type="button"
-                    class="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-medium text-slate-600 transition-colors hover:border-[rgba(138,11,78,0.20)] hover:text-[#8a0b4e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.20)] focus-visible:ring-offset-1"
+                    class="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-xs font-medium text-slate-600 transition-colors hover:border-[rgba(138,11,78,0.20)] hover:text-[#8a0b4e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.20)] focus-visible:ring-offset-1"
                     x-on:click="$dispatch('close-modal', 'pm-confirm-assignment')"
                     x-bind:disabled="submitting"
                 >
@@ -934,7 +942,7 @@
                 </button>
                 <button
                     type="button"
-                    class="inline-flex h-9 items-center justify-center rounded-xl px-5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
+                    class="inline-flex h-8 items-center justify-center rounded-lg px-4 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
                     :class="submitting
                         ? 'cursor-not-allowed bg-slate-200 text-slate-400'
                         : 'bg-[#8a0b4e] text-white hover:bg-[#6d0940]'"
@@ -945,12 +953,12 @@
                     "
                 >
                     <span x-show="!submitting">Ya, Lanjutkan</span>
-                    <span x-show="submitting">Memproses...</span>
+                    <span x-show="submitting" x-cloak>Memproses…</span>
                 </button>
             </div>
         </x-pm.modal-confirm>
 
-        {{-- Confirm Modal: Unassign --}}
+        {{-- Modal: Batalkan Penugasan --}}
         <x-pm.modal-confirm
             name="pm-confirm-unassign"
             :show="false"
@@ -958,10 +966,10 @@
             variant="danger"
             x-data="{ ticket: '', bugTitle: '', assigneeName: '', submitting: false }"
             x-on:pm-open-unassign-confirm.window="
-                ticket = $event.detail?.ticket || '';
-                bugTitle = $event.detail?.bugTitle || '';
+                ticket       = $event.detail?.ticket       || '';
+                bugTitle     = $event.detail?.bugTitle     || '';
                 assigneeName = $event.detail?.assigneeName || '';
-                submitting = false;
+                submitting   = false;
                 $dispatch('open-modal', 'pm-confirm-unassign');
             "
             x-on:pm-unassign-finished.window="submitting = false"
@@ -970,23 +978,24 @@
 
             <x-slot:description>
                 <span class="block text-sm text-slate-500">
-                    <span class="font-medium text-slate-900" x-text="ticket"></span>
+                    <span class="font-medium text-slate-800" x-text="ticket"></span>
                     <span class="text-slate-300">·</span>
                     <span x-text="bugTitle"></span>
                 </span>
                 <span class="mt-2 block text-sm text-slate-500">
                     {{ __('labels.current_assignee') }}:
-                    <span class="font-medium text-slate-900" x-text="assigneeName || '—'"></span>
+                    <span class="font-medium text-slate-800" x-text="assigneeName || '—'"></span>
                 </span>
                 <span class="mt-2 block text-sm text-slate-500">
-                    Penugasan dibatalkan dan status dikembalikan ke <span class="font-medium text-slate-900">Dilaporkan</span>.
+                    Penugasan akan dibatalkan dan status dikembalikan ke
+                    <span class="font-medium text-slate-800">Dilaporkan</span>.
                 </span>
             </x-slot:description>
 
             <div class="mt-6 flex justify-end gap-2">
                 <button
                     type="button"
-                    class="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-medium text-slate-600 transition-colors hover:border-[rgba(138,11,78,0.20)] hover:text-[#8a0b4e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.20)] focus-visible:ring-offset-1"
+                    class="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-xs font-medium text-slate-600 transition-colors hover:border-[rgba(138,11,78,0.20)] hover:text-[#8a0b4e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.20)] focus-visible:ring-offset-1"
                     x-on:click="$dispatch('close-modal', 'pm-confirm-unassign')"
                     x-bind:disabled="submitting"
                 >
@@ -994,7 +1003,7 @@
                 </button>
                 <button
                     type="button"
-                    class="inline-flex h-9 items-center justify-center rounded-xl px-5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(190,18,60,0.30)] focus-visible:ring-offset-1"
+                    class="inline-flex h-8 items-center justify-center rounded-lg px-4 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(190,18,60,0.30)] focus-visible:ring-offset-1"
                     :class="submitting
                         ? 'cursor-not-allowed bg-slate-200 text-slate-400'
                         : 'bg-rose-600 text-white hover:bg-rose-700'"
@@ -1005,7 +1014,7 @@
                     "
                 >
                     <span x-show="!submitting">Ya, Batalkan</span>
-                    <span x-show="submitting">Memproses...</span>
+                    <span x-show="submitting" x-cloak>Memproses…</span>
                 </button>
             </div>
         </x-pm.modal-confirm>
