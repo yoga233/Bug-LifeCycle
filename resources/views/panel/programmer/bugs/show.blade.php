@@ -1,51 +1,60 @@
 @extends('layouts.programmer')
 
-@section('title', 'Detail Bug')
+@section('title', 'Detail Tiket')
 
 @section('content')
     @php
+        /*
+        |--------------------------------------------------------------------------
+        | Back behavior + breadcrumb dinamis
+        |--------------------------------------------------------------------------
+        */
         $currentUrl = url()->current();
         $rawReturn  = (string) request()->query('return', '');
-        $appHost    = parse_url(config('app.url'), PHP_URL_HOST);
+        $appUrl     = config('app.url');
+        $appHost    = parse_url($appUrl, PHP_URL_HOST);
 
         $isSafeReturn = false;
         if ($rawReturn !== '') {
-            $returnHost   = parse_url($rawReturn, PHP_URL_HOST);
-            $returnScheme = parse_url($rawReturn, PHP_URL_SCHEME);
+            $decoded      = urldecode($rawReturn);
+            $returnHost   = parse_url($decoded, PHP_URL_HOST);
+            $returnScheme = parse_url($decoded, PHP_URL_SCHEME);
 
-            if ($returnScheme === null && $returnHost === null && str_starts_with($rawReturn, '/')) {
+            if ($returnScheme === null && $returnHost === null && str_starts_with($decoded, '/')) {
                 $isSafeReturn = true;
             }
+
             if (! $isSafeReturn && $returnHost && $appHost && $returnHost === $appHost) {
                 $isSafeReturn = true;
             }
-            if ($isSafeReturn && $rawReturn === $currentUrl) {
+
+            if ($isSafeReturn && rtrim($decoded, '/') === rtrim($currentUrl, '/')) {
                 $isSafeReturn = false;
             }
         }
 
-        $backUrl = $isSafeReturn ? $rawReturn : url()->previous();
-        if ($backUrl === $currentUrl) {
-            $backUrl = route('programmer.dashboard');
-        }
+        $backUrl = $isSafeReturn ? urldecode($rawReturn) : route('programmer.dashboard');
 
-        // Breadcrumb label
         $returnLabel = 'Dashboard';
         if ($backUrl) {
             if (str_contains($backUrl, 'kinerja')) {
                 $returnLabel = 'Riwayat Kinerja';
+            } elseif (str_contains($backUrl, 'notifications')) {
+                $returnLabel = 'Notifikasi';
             } elseif (str_contains($backUrl, 'dashboard')) {
                 $returnLabel = 'Dashboard';
-            } elseif (str_contains($backUrl, 'bugs')) {
-                $returnLabel = 'Daftar Bug';
             }
         }
 
-        // Description split
-        $rawDescription = (string) ($bug->description ?? '');
-        $marker         = 'Langkah Reproduksi:';
-        $descriptionText    = $rawDescription;
-        $reproductionSteps  = '';
+        /*
+        |--------------------------------------------------------------------------
+        | Split deskripsi + langkah reproduksi
+        |--------------------------------------------------------------------------
+        */
+        $rawDescription   = (string) ($bug->description ?? '');
+        $marker           = 'Langkah Reproduksi:';
+        $descriptionText  = $rawDescription;
+        $reproductionSteps = '';
 
         if (str_contains($rawDescription, $marker)) {
             [$descPart, $reproPart] = array_pad(explode($marker, $rawDescription, 2), 2, '');
@@ -53,10 +62,14 @@
             $reproductionSteps = trim($reproPart);
         }
 
-        // Parse SLA from title
-        $rawTitle     = (string) ($bug->title ?? '');
-        $titleDisplay = $rawTitle;
-        $titleSuffix  = '';
+        /*
+        |--------------------------------------------------------------------------
+        | Parse SLA info from title
+        |--------------------------------------------------------------------------
+        */
+        $rawTitle         = (string) ($bug->title ?? '');
+        $titleDisplay     = $rawTitle;
+        $titleSuffix      = '';
         $titleSuffixClass = 'text-slate-400';
 
         if (preg_match('/\s*-\s*(SLA\s+(?:Terlambat|Tepat|Terlewat)[^-]*?)(?:\s*-\s*|$)/iu', $rawTitle, $m)) {
@@ -72,9 +85,13 @@
             }
         }
 
-        $ticketLabel = $ticket ?? ($bug->ticket ?? sprintf('#BUG-%06d', $bug->id));
+        $ticketLabel = $bug->ticket ?? sprintf('BUG-%06d', $bug->id);
 
-        // Timeline helpers
+        /*
+        |--------------------------------------------------------------------------
+        | Timeline helpers
+        |--------------------------------------------------------------------------
+        */
         $timelineKey = fn ($s) => str((string) $s)->lower()->replace(' ', '_')->toString();
 
         $timelineLabel = fn ($s) => match ($s) {
@@ -119,25 +136,29 @@
         ]);
 
         foreach ($histories as $h) {
-            $events->push(['status' => $h->new_status, 'at' => $h->changed_at]);
+            $events->push([
+                'status' => $h->new_status,
+                'at'     => $h->changed_at,
+            ]);
         }
 
         if (($events->last()['status'] ?? null) !== $bug->status) {
-            $events->push(['status' => $bug->status, 'at' => $bug->updated_at]);
+            $events->push([
+                'status' => $bug->status,
+                'at'     => $bug->updated_at,
+            ]);
         }
 
         $events = $events->unique('status')->values();
     @endphp
 
     {{-- ============================================================
-         Page Header
+         Header Halaman
          ============================================================ --}}
     <div class="mb-8">
-
-        {{-- Breadcrumb: 1 level dinamis --}}
         <nav class="mb-4 flex items-center gap-1.5" aria-label="Breadcrumb">
             <a
-                href="{{ $backUrl ?: route('programmer.dashboard') }}"
+                href="{{ $backUrl }}"
                 class="text-xs text-slate-400 transition-colors hover:text-[#8a0b4e]"
             >
                 {{ $returnLabel }}
@@ -150,31 +171,28 @@
                       clip-rule="evenodd" />
             </svg>
 
-            <span class="text-xs font-medium text-slate-600" aria-current="page">Detail Bug</span>
+            <span class="text-xs font-medium text-slate-600" aria-current="page">Detail Tiket</span>
         </nav>
 
-        {{-- Title & Badges --}}
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-
-            {{-- Left --}}
             <div class="min-w-0">
-                <div class="mb-1.5 flex flex-wrap items-center gap-1.5">
-                    <span class="font-mono text-[10px] font-semibold tracking-[0.06em] text-slate-400">
-                        {{ $ticketLabel }}
-                    </span>
+                <div class="mb-2 flex flex-wrap items-center gap-2">
+    <span class="font-mono text-[11px] font-semibold tracking-[0.08em] text-slate-700">
+        {{ $ticketLabel }}
+    </span>
 
-                    @if ($bug->project?->name)
-                        <span class="inline-flex items-center rounded-full border border-slate-200/80 bg-slate-50/80 px-2 py-0.5 text-[10px] font-medium text-slate-400">
-                            {{ $bug->project->name }}
-                        </span>
-                    @endif
+    @if ($bug->project?->name)
+        <span class="inline-flex items-center rounded-full border border-slate-300/80 bg-slate-50 px-2.5 py-0.5 text-[10px] font-medium text-slate-600">
+            {{ $bug->project->name }}
+        </span>
+    @endif
 
-                    @if ($bug->severity)
-                        <x-severity-badge :severity="$bug->severity" class="px-2 py-0.5 text-[10px] font-semibold" />
-                    @endif
-                </div>
+    @if ($bug->severity)
+        <x-severity-badge :severity="$bug->severity" class="px-2 py-0.5 text-[10px] font-semibold" />
+    @endif
+</div>
 
-                <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">
+                <h1 class="text-2xl font-semibold tracking-tight text-slate-800 sm:text-[28px]">
                     <span>{{ $titleDisplay }}</span>
                     @if ($titleSuffix !== '')
                         <span class="ml-1.5 text-sm font-medium {{ $titleSuffixClass }}">
@@ -183,19 +201,18 @@
                     @endif
                 </h1>
 
-                <p class="mt-2 text-sm leading-relaxed text-slate-500">
-                    Tinjau laporan, update progres, dan catat catatan perbaikan di komentar.
+                <p class="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
+                    Tinjau laporan, perbarui progres pengerjaan, dan simpan catatan teknis di komentar agar tindak lanjut lebih jelas.
                 </p>
             </div>
 
-            {{-- Right --}}
             <div class="flex flex-wrap items-center gap-2">
                 <x-pm.status-badge :status="$bug->status" variant="pill" :dot="true" />
 
                 @if ($bug->priority)
                     <x-priority-badge :priority="$bug->priority" class="px-2.5 py-1 text-[11px]" />
                 @else
-                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide leading-none whitespace-nowrap text-slate-500">
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                         Belum diprioritaskan
                     </span>
                 @endif
@@ -212,32 +229,42 @@
         <div class="space-y-6 lg:col-span-2">
 
             {{-- Laporan --}}
-            <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-6 py-5">
-                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Laporan</p>
-                    <p class="mt-1 text-sm font-medium text-slate-900">Detail Laporan</p>
-                    <p class="mt-1 text-sm text-slate-500">Informasi yang dibutuhkan untuk analisa dan implementasi perbaikan.</p>
+                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
+                        Laporan
+                    </p>
+                    <p class="mt-1 text-sm font-semibold text-slate-800">Detail Laporan</p>
+                    <p class="mt-1 text-sm text-slate-500">
+                        Informasi utama yang dibutuhkan untuk memahami masalah dan melakukan perbaikan.
+                    </p>
                 </div>
 
                 <div class="space-y-6 px-6 py-5">
-
-                    {{-- Deskripsi --}}
                     <div>
-                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Deskripsi</p>
-                        <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">{{ $descriptionText }}</p>
+                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">
+                            Deskripsi
+                        </p>
+                        <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                            {{ $descriptionText }}
+                        </p>
                     </div>
 
-                    {{-- Langkah Reproduksi --}}
                     @if ($reproductionSteps !== '')
                         <div class="border-t border-slate-100 pt-5">
-                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Langkah Reproduksi</p>
-                            <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">{{ $reproductionSteps }}</p>
+                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">
+                                Langkah Reproduksi
+                            </p>
+                            <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                                {{ $reproductionSteps }}
+                            </p>
                         </div>
                     @endif
 
-                    {{-- Lampiran --}}
                     <div class="border-t border-slate-100 pt-5">
-                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Lampiran</p>
+                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">
+                            Lampiran
+                        </p>
 
                         <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                             @forelse ($bug->attachments as $file)
@@ -251,7 +278,7 @@
                                 <a
                                     href="{{ $publicUrl ?? '#' }}"
                                     @if ($publicUrl) target="_blank" rel="noopener" @endif
-                                    class="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 transition-colors duration-200 hover:border-[#8a0b4e]/20 hover:bg-[#8a0b4e]/[0.01]"
+                                    class="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition-colors duration-150 hover:border-[rgba(138,11,78,0.18)] hover:bg-[rgba(138,11,78,0.01)]"
                                     title="{{ $fileName }}"
                                 >
                                     <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
@@ -283,11 +310,15 @@
             </section>
 
             {{-- Komentar --}}
-            <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-6 py-5">
-                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Diskusi</p>
-                    <p class="mt-1 text-sm font-medium text-slate-900">Komentar</p>
-                    <p class="mt-1 text-sm text-slate-500">Diskusi teknis dan catatan progres perbaikan.</p>
+                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
+                        Diskusi
+                    </p>
+                    <p class="mt-1 text-sm font-semibold text-slate-800">Komentar</p>
+                    <p class="mt-1 text-sm text-slate-500">
+                        Catat progres, kendala teknis, dan keputusan perbaikan agar riwayat kerja tetap jelas.
+                    </p>
                 </div>
 
                 <div class="px-6 py-5">
@@ -313,7 +344,7 @@
                                 <p class="text-sm text-slate-400">
                                     Belum ada komentar.
                                     <a href="#comment-form" class="font-medium text-slate-600 underline-offset-2 transition-colors hover:text-[#8a0b4e] hover:underline">
-                                        Tulis yang pertama.
+                                        Tulis komentar pertama.
                                     </a>
                                 </p>
                             </div>
@@ -329,9 +360,10 @@
 
                                 <div class="min-w-0 flex-1">
                                     <div class="mb-1.5 flex flex-wrap items-center gap-2">
-                                        <span class="text-sm font-medium text-slate-900" x-text="g.user_name"></span>
+                                        <span class="text-sm font-medium text-slate-800" x-text="g.user_name"></span>
                                         <span class="text-xs text-slate-400" x-text="g.created_at"></span>
                                     </div>
+
                                     <div class="space-y-2">
                                         <template x-for="item in g.items" :key="item.id">
                                             <p class="whitespace-pre-line text-sm leading-relaxed text-slate-600" x-text="item.content"></p>
@@ -366,8 +398,7 @@
                                     x-on:input="if (content.trim()) showEmptyAlert = false"
                                 ></textarea>
 
-                                <p class="text-xs text-rose-500"
-                                   x-show="showEmptyAlert" x-transition.opacity x-cloak>
+                                <p class="text-xs text-rose-500" x-show="showEmptyAlert" x-transition.opacity x-cloak>
                                     Kolom komentar wajib diisi sebelum mengirim.
                                 </p>
 
@@ -378,8 +409,7 @@
 
                                     <button
                                         type="button"
-                                        class="inline-flex h-9 items-center justify-center rounded-xl px-5 text-xs font-medium text-white transition-colors"
-                                        :style="submitting ? 'background-color: #cbd5e1; cursor: not-allowed;' : 'background-color: #8a0b4e;'"
+                                        class="inline-flex h-8 items-center justify-center rounded-lg bg-[#8a0b4e] px-4 text-xs font-semibold text-white transition-all duration-150 hover:bg-[#6d0940] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
                                         :disabled="submitting"
                                         x-on:click="
                                             if (!content.trim()) { showEmptyAlert = true; return; }
@@ -388,7 +418,7 @@
                                         "
                                     >
                                         <span x-show="!submitting">Kirim Komentar</span>
-                                        <span x-show="submitting">Mengirim...</span>
+                                        <span x-show="submitting" x-cloak>Mengirim…</span>
                                     </button>
                                 </div>
                             </form>
@@ -402,48 +432,54 @@
         <div class="space-y-6">
 
             {{-- Ringkasan --}}
-            <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-6 py-5">
-                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Info</p>
-                    <p class="mt-1 text-sm font-medium text-slate-900">Ringkasan</p>
+                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
+                        Info
+                    </p>
+                    <p class="mt-1 text-sm font-semibold text-slate-800">Ringkasan</p>
                 </div>
 
                 <div class="divide-y divide-slate-100">
                     <div class="px-6 py-4">
-                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Reporter</p>
-                        <p class="mt-1.5 text-sm font-medium text-slate-900">{{ $bug->guest_name }}</p>
+                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Pelapor</p>
+                        <p class="mt-1.5 text-sm font-medium text-slate-800">{{ $bug->guest_name }}</p>
                         <p class="mt-0.5 text-xs text-slate-400">{{ $bug->guest_email }}</p>
                     </div>
 
                     <div class="px-6 py-4">
-                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Versi</p>
-                        <p class="mt-1.5 text-sm font-medium text-slate-900">{{ $bug->guest_version ?: '—' }}</p>
+                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Versi Aplikasi</p>
+                        <p class="mt-1.5 text-sm font-medium text-slate-800">{{ $bug->guest_version ?: '—' }}</p>
                     </div>
 
                     <div class="px-6 py-4">
-                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">{{ __('labels.assignee') }}</p>
-                        <p class="mt-1.5 text-sm font-medium text-slate-900">{{ $bug->assignee?->name ?? '—' }}</p>
+                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Penanggung Jawab</p>
+                        <p class="mt-1.5 text-sm font-medium text-slate-800">{{ $bug->assignee?->name ?? '—' }}</p>
                     </div>
 
                     <div class="px-6 py-4">
                         <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Dilaporkan Pada</p>
-                        <p class="mt-1.5 text-sm font-medium text-slate-900">{{ $bug->created_at?->format('d M Y, H:i') ?? '—' }}</p>
+                        <p class="mt-1.5 text-sm font-medium text-slate-800">{{ $bug->created_at?->format('d M Y, H:i') ?? '—' }}</p>
                     </div>
                 </div>
             </section>
 
             {{-- Aksi Programmer --}}
-            <section class="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-6 py-5">
-                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Tindakan</p>
-                    <p class="mt-1 text-sm font-medium text-slate-900">Aksi Programmer</p>
+                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
+                        Tindakan
+                    </p>
+                    <p class="mt-1 text-sm font-semibold text-slate-800">Aksi Programmer</p>
                     <p class="mt-1 text-sm text-slate-500">
                         @if ($bug->status === 'Assigned')
-                            Mulai pengerjaan untuk mengubah status menjadi Dalam Pengerjaan.
+                            Mulai pengerjaan untuk mengubah status tiket menjadi Dalam Pengerjaan.
                         @elseif ($bug->status === 'In Progress')
-                            Setelah perbaikan selesai, kirim bug ke tahap Pengujian.
+                            Setelah perbaikan selesai, kirim tiket ke tahap Pengujian.
                         @elseif ($bug->status === 'Testing')
-                            Bug sedang menunggu validasi dari QA.
+                            Tiket sedang menunggu validasi dari QA.
+                        @elseif ($bug->status === 'Rejected')
+                            QA mengembalikan tiket ini. Periksa catatan QA, lalu lanjutkan perbaikan.
                         @else
                             Tidak ada aksi yang tersedia pada status ini.
                         @endif
@@ -456,7 +492,7 @@
                             @csrf
                             <button
                                 type="submit"
-                                class="inline-flex h-9 w-full items-center justify-center rounded-xl bg-[#8a0b4e] text-xs font-medium text-white transition-colors hover:bg-[#6d0940]"
+                                class="inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#8a0b4e] text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#6d0940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
                             >
                                 Mulai Pengerjaan
                             </button>
@@ -466,30 +502,50 @@
                             @csrf
                             <button
                                 type="submit"
-                                class="inline-flex h-9 w-full items-center justify-center rounded-xl bg-[#8a0b4e] text-xs font-medium text-white transition-colors hover:bg-[#6d0940]"
+                                class="inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#8a0b4e] text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#6d0940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
                             >
                                 Kirim ke Pengujian
                             </button>
                         </form>
+                    @elseif ($bug->status === 'Rejected')
+                        <form method="POST" action="{{ route('programmer.bugs.start', $bug) }}">
+                            @csrf
+                            <button
+                                type="submit"
+                                class="inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#8a0b4e] text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#6d0940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
+                            >
+                                Kerjakan Ulang
+                            </button>
+                        </form>
                     @elseif ($bug->status === 'Testing')
-                        <p class="text-sm text-slate-400">Bug sedang diverifikasi oleh QA. Tidak ada aksi yang diperlukan saat ini.</p>
+                        <p class="text-sm text-slate-500">
+                            Tiket sedang diverifikasi oleh QA. Tidak ada aksi yang diperlukan saat ini.
+                        </p>
                     @else
-                        <p class="text-sm text-slate-400">Tidak ada aksi yang dapat dilakukan pada status ini.</p>
+                        <p class="text-sm text-slate-500">
+                            Tidak ada aksi yang tersedia pada status ini.
+                        </p>
                     @endif
                 </div>
             </section>
 
             {{-- Prioritas & SLA --}}
-            <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-6 py-5">
-                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Prioritas</p>
-                    <p class="mt-1 text-sm font-medium text-slate-900">Prioritas & SLA</p>
-                    <p class="mt-1 text-sm text-slate-500">Ditetapkan oleh Project Manager sebagai acuan pengerjaan.</p>
+                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
+                        Prioritas
+                    </p>
+                    <p class="mt-1 text-sm font-semibold text-slate-800">Prioritas & SLA</p>
+                    <p class="mt-1 text-sm text-slate-500">
+                        Ditetapkan oleh Project Manager sebagai acuan pengerjaan.
+                    </p>
                 </div>
 
                 <div class="divide-y divide-slate-100">
                     <div class="px-6 py-4">
-                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Prioritas Saat Ini</p>
+                        <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">
+                            Prioritas Saat Ini
+                        </p>
                         <div class="mt-1.5">
                             @if ($bug->priority)
                                 <x-priority-badge :priority="$bug->priority" class="px-2.5 py-1 text-[11px]" />
@@ -503,18 +559,24 @@
 
                     @if ($bug->priority)
                         <div class="px-6 py-4">
-                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Target SLA</p>
-                            <p class="mt-1.5 text-sm font-medium text-slate-900">{{ $bug->priority->sla_hours }} jam</p>
+                            <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">
+                                Target SLA
+                            </p>
+                            <p class="mt-1.5 text-sm font-medium text-slate-800">
+                                {{ $bug->priority->sla_hours }} jam
+                            </p>
                         </div>
                     @endif
                 </div>
             </section>
 
             {{-- Timeline --}}
-            <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-6 py-5">
-                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Riwayat</p>
-                    <p class="mt-1 text-sm font-medium text-slate-900">Status Timeline</p>
+                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
+                        Riwayat
+                    </p>
+                    <p class="mt-1 text-sm font-semibold text-slate-800">Status Timeline</p>
                 </div>
 
                 <div class="px-6 py-5">
@@ -529,14 +591,14 @@
                             </div>
 
                             <div class="min-w-0 flex-1 {{ $loop->last ? 'pb-0' : 'pb-4' }}">
-                                <p class="text-sm font-medium text-slate-900">{{ $timelineLabel($statusKey) }}</p>
+                                <p class="text-sm font-medium text-slate-800">{{ $timelineLabel($statusKey) }}</p>
                                 <p class="mt-0.5 text-xs text-slate-400">
                                     {{ $e['at']?->format('d M Y, H:i') ?? '—' }}
                                 </p>
                             </div>
                         </div>
                     @empty
-                        <p class="text-sm text-slate-400">Belum ada histori.</p>
+                        <p class="text-sm text-slate-500">Belum ada riwayat perubahan status.</p>
                     @endforelse
                 </div>
             </section>

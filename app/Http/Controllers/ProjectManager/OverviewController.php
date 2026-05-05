@@ -30,29 +30,28 @@ class OverviewController extends Controller
             fn () => $this->computeDashboardStats()
         );
 
-        $newBugs = Bug::query()
-            ->select([
-                'id',
-                'project_id',
-                'severity_id',
-                'priority_id',
-                'assignee_id',
-                'guest_name',
-                'title',
-                'status',
-                'created_at',
-            ])
-            ->with([
-                'project:id,name',
-                'priority:id,level,sla_hours,bg_color,text_color',
-                'severity:id,level,bg_color,text_color',
-                'assignee:id,name',
-            ])
-            ->whereNull('assignee_id')
-            ->where('status', 'Reported')
-            ->latest()
-            ->limit(10)
-            ->get();
+            $newBugs = Bug::query()
+                ->select([
+                    'id',
+                    'project_id',
+                    'severity_id',
+                    'priority_id',
+                    'assignee_id',
+                    'guest_name',
+                    'title',
+                    'status',
+                    'created_at',
+                ])
+                ->with([
+                    'project:id,name',
+                    'priority:id,level,sla_hours,bg_color,text_color',
+                    'severity:id,level,bg_color,text_color',
+                    'assignee:id,name',
+                ])
+                ->whereNull('assignee_id')
+                ->where('status', 'Reported')
+                ->latest() // <-- Tetap terbaru di atas
+                ->get();   // <-- Hapus limit(10) di atas baris ini
 
         $programmers = Cache::remember(
             self::CACHE_PREFIX . 'programmers',

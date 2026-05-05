@@ -38,9 +38,7 @@ class DashboardController extends Controller
             ])
             ->where('assignee_id', $user->id)
             ->whereIn('status', $activeStatuses)
-            // Prioritaskan item yang belum diterima (Assigned) agar selalu muncul paling atas.
-            ->orderByRaw("CASE status WHEN 'Assigned' THEN 0 WHEN 'In Progress' THEN 1 WHEN 'Testing' THEN 2 WHEN 'Rejected' THEN 3 ELSE 4 END")
-            ->orderByDesc('updated_at');
+            ->latest(); // <-- Ubah bagian ini
 
         $tasks = $tasksQuery
             ->get();
