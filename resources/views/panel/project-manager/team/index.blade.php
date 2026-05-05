@@ -33,8 +33,8 @@
 
         @php
             $roleBadge = fn (string $role) => match($role) {
-                'Programmer'      => 'border border-slate-200 bg-slate-100 text-slate-700',
-                'Project Manager' => 'border border-slate-200 bg-slate-50 text-slate-700',
+                'Programmer'      => 'border border-[#8a0b4e]/20 bg-[#f5e8ef] text-[#8a0b4e]',
+                'Project Manager' => 'border border-[#8a0b4e]/20 bg-[#f5e8ef] text-[#8a0b4e]',
                 'QA'              => 'border border-emerald-100 bg-emerald-50 text-emerald-700',
                 default           => 'border border-slate-200 bg-slate-50 text-slate-600',
             };

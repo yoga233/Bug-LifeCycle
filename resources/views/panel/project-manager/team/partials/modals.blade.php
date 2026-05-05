@@ -11,7 +11,7 @@
             <div class="sm:col-span-2">
                 <x-input-label for="create_user_name" value="Name" />
                 <x-text-input id="create_user_name" name="name" type="text"
-                    class="mt-1 block w-full focus:border-slate-700 focus:ring-slate-100"
+                    class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                     :value="old('name')" required />
                 <x-input-error class="mt-2" :messages="$errors->get('name')" />
                 <p class="mt-1 text-xs text-slate-500">Nama lengkap internal (contoh: "Rina Putri").</p>
@@ -20,7 +20,7 @@
             <div class="sm:col-span-2">
                 <x-input-label for="create_user_email" value="Email" />
                 <x-text-input id="create_user_email" name="email" type="email"
-                    class="mt-1 block w-full focus:border-slate-700 focus:ring-slate-100"
+                    class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                     :value="old('email')" required />
                 <x-input-error class="mt-2" :messages="$errors->get('email')" />
                 <p class="mt-1 text-xs text-slate-500">Dipakai untuk login &amp; notifikasi.</p>
@@ -29,7 +29,7 @@
             <div class="sm:col-span-2">
                 <x-input-label for="create_user_role" value="Role" />
                 <select id="create_user_role" name="role"
-                    class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-100"
+                    class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                     required>
                     @foreach($roles as $role)
                         <option value="{{ $role->name }}" @selected(old('role') === $role->name)>
@@ -44,7 +44,7 @@
             <div>
                 <x-input-label for="create_user_password" value="Password" />
                 <x-text-input id="create_user_password" name="password" type="password"
-                    class="mt-1 block w-full focus:border-slate-700 focus:ring-slate-100"
+                    class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                     required />
                 <x-input-error class="mt-2" :messages="$errors->get('password')" />
                 <p class="mt-1 text-xs text-slate-500">Minimal 8 karakter.</p>
@@ -53,7 +53,7 @@
             <div>
                 <x-input-label for="create_user_password_confirmation" value="Confirm Password" />
                 <x-text-input id="create_user_password_confirmation" name="password_confirmation" type="password"
-                    class="mt-1 block w-full focus:border-slate-700 focus:ring-slate-100"
+                    class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                     required />
             </div>
         </div>
@@ -61,7 +61,7 @@
         <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
             <div class="flex items-start gap-3">
                 <input id="create_user_is_active" name="is_active" type="checkbox" value="1"
-                    class="mt-1 rounded border-slate-300 text-slate-700 focus:ring-slate-100"
+                    class="mt-1 rounded border-slate-300 text-[#8a0b4e] focus:ring-[#f5e8ef]"
                     checked>
                 <div class="min-w-0">
                     <label for="create_user_is_active" class="text-sm font-medium text-slate-900">
@@ -84,7 +84,7 @@
                 class="justify-center normal-case tracking-normal"
                 style="background-color:#8a0b4e;"
                 onmouseover="this.style.backgroundColor='#6d0940'"
-                onmouseout="this.style.backgroundColor='#334155'"
+                onmouseout="this.style.backgroundColor='#8a0b4e'"
             >Create User</x-primary-button>
         </div>
     </form>
@@ -107,21 +107,21 @@
                 <div class="sm:col-span-2">
                     <x-input-label for="edit_user_name_{{ $u->id }}" value="Name" />
                     <x-text-input id="edit_user_name_{{ $u->id }}" name="name" type="text"
-                        class="mt-1 block w-full focus:border-slate-700 focus:ring-slate-100"
+                        class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                         :value="old('name', $u->name)" required />
                 </div>
 
                 <div class="sm:col-span-2">
                     <x-input-label for="edit_user_email_{{ $u->id }}" value="Email" />
                     <x-text-input id="edit_user_email_{{ $u->id }}" name="email" type="email"
-                        class="mt-1 block w-full focus:border-slate-700 focus:ring-slate-100"
+                        class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                         :value="old('email', $u->email)" required />
                 </div>
 
                 <div class="sm:col-span-2">
                     <x-input-label for="edit_user_role_{{ $u->id }}" value="Role" />
                     <select id="edit_user_role_{{ $u->id }}" name="role"
-                        class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-100"
+                        class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                         required>
                         @foreach($roles as $role)
                             <option value="{{ $role->name }}" @selected(old('role', $roleName) === $role->name)>
@@ -136,7 +136,7 @@
                 <div class="flex items-start gap-3">
                     <input type="hidden" name="is_active" value="0" />
                     <input id="edit_user_is_active_{{ $u->id }}" name="is_active" type="checkbox" value="1"
-                        class="mt-1 rounded border-slate-300 text-slate-700 focus:ring-slate-100"
+                        class="mt-1 rounded border-slate-300 text-[#8a0b4e] focus:ring-[#f5e8ef]"
                         @checked(old('is_active', $u->is_active))>
                     <div>
                         <label for="edit_user_is_active_{{ $u->id }}" class="text-sm font-medium text-slate-900">
@@ -159,13 +159,13 @@
                     <div>
                         <x-input-label for="edit_user_password_{{ $u->id }}" value="New Password" />
                         <x-text-input id="edit_user_password_{{ $u->id }}" name="password" type="password"
-                            class="mt-1 block w-full focus:border-slate-700 focus:ring-slate-100" />
+                            class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]" />
                     </div>
 
                     <div>
                         <x-input-label for="edit_user_password_confirmation_{{ $u->id }}" value="Confirm New Password" />
                         <x-text-input id="edit_user_password_confirmation_{{ $u->id }}" name="password_confirmation" type="password"
-                            class="mt-1 block w-full focus:border-slate-700 focus:ring-slate-100" />
+                            class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]" />
                     </div>
                 </div>
             </div>
@@ -180,7 +180,7 @@
                     class="justify-center normal-case tracking-normal"
                     style="background-color:#8a0b4e;"
                     onmouseover="this.style.backgroundColor='#6d0940'"
-                    onmouseout="this.style.backgroundColor='#334155'"
+                    onmouseout="this.style.backgroundColor='#8a0b4e'"
                 >Save changes</x-primary-button>
             </div>
         </form>
@@ -242,7 +242,7 @@
                     id="create_project_name"
                     name="name"
                     type="text"
-                    class="mt-1 block w-full focus:border-slate-700 focus:ring-slate-100"
+                    class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                     required
                 />
                 <p class="mt-1 text-xs text-slate-500">
@@ -256,7 +256,7 @@
                     id="create_project_platform"
                     name="platform"
                     type="text"
-                    class="mt-1 block w-full focus:border-slate-700 focus:ring-slate-100"
+                    class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                     required
                 />
                 <p class="mt-1 text-xs text-slate-500">Contoh: Web, Android, iOS.</p>
@@ -269,7 +269,7 @@
                     name="description"
                     rows="4"
                     placeholder="Ringkasan singkat project..."
-                    class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-300 transition-colors duration-200 focus:border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-100"
+                    class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-300 transition-colors duration-200 focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                 ></textarea>
             </div>
         </div>
@@ -286,7 +286,7 @@
                 class="justify-center normal-case tracking-normal transition-colors duration-200"
                 style="background-color:#8a0b4e;"
                 onmouseover="this.style.backgroundColor='#6d0940'"
-                onmouseout="this.style.backgroundColor='#334155'"
+                onmouseout="this.style.backgroundColor='#8a0b4e'"
             >
                 Create Project
             </x-primary-button>
@@ -308,14 +308,14 @@
                 <div class="sm:col-span-2">
                     <x-input-label for="edit_project_name_{{ $p->id }}" value="Project name" />
                     <x-text-input id="edit_project_name_{{ $p->id }}" name="name" type="text"
-                        class="mt-1 block w-full focus:border-slate-700 focus:ring-slate-100"
+                        class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                         :value="$p->name" required />
                 </div>
 
                 <div class="sm:col-span-2">
                     <x-input-label for="edit_project_platform_{{ $p->id }}" value="Platform" />
                     <x-text-input id="edit_project_platform_{{ $p->id }}" name="platform" type="text"
-                        class="mt-1 block w-full focus:border-slate-700 focus:ring-slate-100"
+                        class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                         :value="$p->platform" required />
                 </div>
 
@@ -325,7 +325,7 @@
                         id="edit_project_description_{{ $p->id }}"
                         name="description"
                         rows="4"
-                        class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-300 focus:border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-100"
+                        class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-300 focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                     >{{ $p->description }}</textarea>
                 </div>
             </div>
@@ -340,7 +340,7 @@
                     class="justify-center normal-case tracking-normal"
                     style="background-color:#8a0b4e;"
                     onmouseover="this.style.backgroundColor='#6d0940'"
-                    onmouseout="this.style.backgroundColor='#334155'"
+                    onmouseout="this.style.backgroundColor='#8a0b4e'"
                 >Save changes</x-primary-button>
             </div>
         </form>

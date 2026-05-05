@@ -16,9 +16,9 @@
         <button
             type="button"
             class="inline-flex h-9 items-center justify-center gap-2 rounded-xl px-5 text-xs font-medium text-white transition-colors"
-            style="background-color: #8a0b4e;"
-            onmouseover="this.style.backgroundColor='#6d0940'"
-            onmouseout="this.style.backgroundColor='#334155'"
+        style="background-color: #8a0b4e;"
+        onmouseover="this.style.backgroundColor='#6d0940'"
+        onmouseout="this.style.backgroundColor='#8a0b4e'"
             x-data
             x-on:click.prevent="$dispatch('open-modal', 'create-severity')"
         >
@@ -58,7 +58,7 @@
                 <div class="flex shrink-0 items-center gap-2">
                     <button
                         type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-colors hover:border-slate-700/10 hover:bg-slate-700/[0.02] hover:text-slate-700"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#8a0b4e] transition-colors hover:border-[#8a0b4e]/20 hover:bg-[#f5e8ef] hover:text-[#6d0940]"
                         x-data
                         x-on:click.prevent="$dispatch('open-modal', 'edit-severity-{{ $s->id }}')"
                         aria-label="Edit"
@@ -180,7 +180,7 @@
                 class="inline-flex h-9 items-center justify-center rounded-xl px-5 text-xs font-medium text-white normal-case tracking-normal"
                 style="background-color: #8a0b4e;"
                 onmouseover="this.style.backgroundColor='#6d0940'"
-                onmouseout="this.style.backgroundColor='#334155'"
+                onmouseout="this.style.backgroundColor='#8a0b4e'"
             >
                 Create Severity
             </x-primary-button>
@@ -290,7 +290,7 @@
                     class="inline-flex h-9 items-center justify-center rounded-xl px-5 text-xs font-medium text-white normal-case tracking-normal"
                     style="background-color: #8a0b4e;"
                     onmouseover="this.style.backgroundColor='#6d0940'"
-                    onmouseout="this.style.backgroundColor='#334155'"
+                    onmouseout="this.style.backgroundColor='#8a0b4e'"
                 >
                     Save changes
                 </x-primary-button>
