@@ -95,6 +95,8 @@ class BugReportController extends Controller
         return [
             'guest_name' => ['required', 'string', 'max:100'],
             'guest_email' => ['required', 'email', 'max:255'],
+            'guest_company' => ['required', 'string', 'max:150'],
+            'guest_position' => ['required', 'string', 'max:100'],
             'guest_version' => ['required', 'string', 'max:50'],
 
             'project_id' => ['required', 'exists:projects,id'],
@@ -130,6 +132,8 @@ class BugReportController extends Controller
         return [
             'guest_name' => __('client-report.attributes.guest_name'),
             'guest_email' => __('client-report.attributes.guest_email'),
+            'guest_company' => __('client-report.attributes.guest_company'),
+            'guest_position' => __('client-report.attributes.guest_position'),
             'guest_version' => __('client-report.attributes.guest_version'),
             'project_id' => __('client-report.attributes.project_id'),
             'severity_id' => __('client-report.attributes.severity_id'),
@@ -147,6 +151,8 @@ class BugReportController extends Controller
         return [
             'guest_name' => 'report_field_label_guest_name',
             'guest_email' => 'report_field_label_guest_email',
+            'guest_company' => 'report_field_label_guest_company',
+            'guest_position' => 'report_field_label_guest_position',
             'guest_version' => 'report_field_label_guest_version',
             'project_id' => 'report_field_label_project',
             'severity_id' => 'report_field_label_severity',
@@ -284,6 +290,8 @@ class BugReportController extends Controller
 
                 'guest_name' => $validated['guest_name'],
                 'guest_email' => $validated['guest_email'],
+                'guest_company' => $validated['guest_company'],
+                'guest_position' => $validated['guest_position'],
                 'guest_version' => $validated['guest_version'],
 
                 'title' => $validated['title'],
@@ -374,6 +382,8 @@ class BugReportController extends Controller
             'ticket' => $ticket,
             'guest_name' => $validated['guest_name'],
             'guest_email' => $validated['guest_email'],
+            'guest_company' => $validated['guest_company'],
+            'guest_position' => $validated['guest_position'],
             'guest_version' => $validated['guest_version'],
             'project_id' => $validated['project_id'],
             'severity_id' => $validated['severity_id'],

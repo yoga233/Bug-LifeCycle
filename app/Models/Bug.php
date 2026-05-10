@@ -18,6 +18,8 @@ class Bug extends Model
         'assignee_id',
         'guest_name',
         'guest_email',
+        'guest_company',
+        'guest_position',
         'guest_version',
         'title',
         'description',

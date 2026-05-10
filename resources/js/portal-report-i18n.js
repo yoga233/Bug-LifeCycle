@@ -53,6 +53,14 @@
       report_field_label_guest_email: 'Email address',
       report_guest_email_hint:     'Your ticket ID and status updates will be sent here.',
 
+      report_label_guest_company:  'Company / Organization',
+      report_placeholder_guest_company: 'PT Example Indonesia',
+      report_field_label_guest_company: 'Company / Organization',
+
+      report_label_guest_position: 'Job Title',
+      report_placeholder_guest_position: 'QA Engineer',
+      report_field_label_guest_position: 'Job title',
+
       /* ── Section: Issue Context ── */
       report_section_bug_details:  'Issue Context',
 
@@ -246,6 +254,14 @@
       report_placeholder_guest_email: 'anda@perusahaan.com',
       report_field_label_guest_email: 'Alamat email',
       report_guest_email_hint:     'ID tiket dan pembaruan status akan dikirim ke sini.',
+
+      report_label_guest_company:  'Perusahaan / Organisasi',
+      report_placeholder_guest_company: 'PT Contoh Indonesia',
+      report_field_label_guest_company: 'Perusahaan / Organisasi',
+
+      report_label_guest_position: 'Jabatan',
+      report_placeholder_guest_position: 'QA Engineer',
+      report_field_label_guest_position: 'Jabatan',
 
       /* ── Section: Issue Context ── */
       report_section_bug_details:  'Konteks Masalah',

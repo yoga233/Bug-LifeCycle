@@ -16,6 +16,8 @@ return [
     'attributes' => [
         'guest_name' => 'Nama lengkap',
         'guest_email' => 'Email aktif',
+        'guest_company' => 'Perusahaan / Organisasi',
+        'guest_position' => 'Jabatan',
         'guest_version' => 'Versi aplikasi',
         'project_id' => 'Project terdampak',
         'severity_id' => 'Tingkat dampak',

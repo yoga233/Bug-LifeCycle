@@ -16,6 +16,8 @@ return [
     'attributes' => [
         'guest_name' => 'Full name',
         'guest_email' => 'Active email',
+        'guest_company' => 'Company / Organization',
+        'guest_position' => 'Job title',
         'guest_version' => 'App version',
         'project_id' => 'Affected project',
         'severity_id' => 'Impact level',

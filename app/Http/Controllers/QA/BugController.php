@@ -18,13 +18,11 @@ class BugController extends Controller
             'priority:id,level,sla_hours,bg_color,text_color',
             'severity:id,level,bg_color,text_color',
             'attachments:id,bug_id,file_name,file_path,uploaded_by,created_at',
-            'comments.user:id,name,email' => function ($q) {
-                $q->select(['users.id', 'users.name', 'users.email']);
-            },
+            'comments.user:id,name,email', // ✅ Hapus closure-nya, pakai string saja
             'statusHistories' => function ($q) {
                 $q->select(['id', 'bug_id', 'user_id', 'old_status', 'new_status', 'changed_at'])
-                  ->orderByDesc('changed_at')
-                  ->limit(50); // Limit history to recent 50 entries
+                ->orderByDesc('changed_at')
+                ->limit(50);
             },
         ]);
 

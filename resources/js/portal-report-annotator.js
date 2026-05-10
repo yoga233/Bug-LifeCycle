@@ -3,8 +3,55 @@ import Konva from 'konva';
 (() => {
   'use strict';
 
-  // Guard
-  if (document.body?.dataset.page !== 'client-report') return;
+  // Guard — mendukung dua konteks: halaman klien dan halaman QA reject
+  const PAGE = document.body?.dataset.page;
+  if (PAGE !== 'client-report' && PAGE !== 'qa-reject') return;
+
+  // Prefix ID untuk elemen di konteks QA (agar tidak bentrok dengan halaman klien)
+  const IS_QA = PAGE === 'qa-reject';
+  const ID = IS_QA
+    ? {
+        form:                    'qa-reject-form',
+        input:                   'qa-reject-attachments',
+        dropzone:                'qa-reject-dropzone',
+        emptyState:              'qa-reject-dropzone-empty',
+        previewWrapper:          'qa-reject-preview-wrapper',
+        previewList:             'qa-reject-preview-list',
+        annotationWorkspace:     'qa-reject-annotation-workspace',
+        annotationCanvasContainer: 'qa-reject-annotation-canvas',
+        annotationFileLabel:     'qa-reject-annotation-file-label',
+        annotationClose:         'qa-reject-annotation-close',
+        annotationSave:          'qa-reject-annotation-save',
+        annotationStatus:        'qa-reject-annotation-status',
+        annotationToolbar:       'qa-reject-annotation-toolbar',
+        addButton:               'qa-reject-attachment-add-btn',
+        errorText:               'qa-reject-error-attachments',
+        annotationUndo:          'qa-reject-annotation-undo',
+        annotationRedo:          'qa-reject-annotation-redo',
+        annotationDelete:        'qa-reject-annotation-delete',
+        annotationClearAll:      'qa-reject-annotation-clear-all',
+      }
+    : {
+        form:                    'clientReportForm',
+        input:                   'attachments',
+        dropzone:                'attachmentDropzone',
+        emptyState:              'attachmentDropzoneEmptyState',
+        previewWrapper:          'attachmentPreviewWrapper',
+        previewList:             'attachmentPreviewList',
+        annotationWorkspace:     'annotationWorkspace',
+        annotationCanvasContainer: 'annotationCanvasContainer',
+        annotationFileLabel:     'annotationFileLabel',
+        annotationClose:         'annotationClose',
+        annotationSave:          'annotationSave',
+        annotationStatus:        'annotationStatus',
+        annotationToolbar:       'annotationToolbar',
+        addButton:               'attachmentAddBtn',
+        errorText:               'error-attachments',
+        annotationUndo:          'annotationUndo',
+        annotationRedo:          'annotationRedo',
+        annotationDelete:        'annotationDelete',
+        annotationClearAll:      'annotationClearAll',
+      };
 
   // State
   const state = {
@@ -41,30 +88,39 @@ import Konva from 'konva';
   const MAX_HISTORY_ENTRIES = 30;
 
   const elements = {
-    form: document.getElementById('clientReportForm'),
-    input: document.getElementById('attachments'),
-    dropzone: document.getElementById('attachmentDropzone'),
-    emptyState: document.getElementById('attachmentDropzoneEmptyState'),
-    previewWrapper: document.getElementById('attachmentPreviewWrapper'),
-    previewList: document.getElementById('attachmentPreviewList'),
-    annotationWorkspace: document.getElementById('annotationWorkspace'),
-    annotationCanvasContainer: document.getElementById('annotationCanvasContainer'),
-    annotationFileLabel: document.getElementById('annotationFileLabel'),
-    annotationClose: document.getElementById('annotationClose'),
-    annotationSave: document.getElementById('annotationSave'),
-    annotationStatus: document.getElementById('annotationStatus'),
-    annotationToolbar: document.getElementById('annotationToolbar'),
-    addButton:
-      document.getElementById('attachmentAddBtn') ||
-      document.getElementById('attachmentAddImageButton'),
-    errorText: document.getElementById('error-attachments'),
-    annotationToolButtons: Array.from(document.querySelectorAll('[data-tool]')),
-    annotationColorButtons: Array.from(document.querySelectorAll('[data-color]')),
-    annotationUndo: document.getElementById('annotationUndo'),
-    annotationRedo: document.getElementById('annotationRedo'),
-    annotationDelete: document.getElementById('annotationDelete'),
-    annotationClearAll: document.getElementById('annotationClearAll'),
+    form:                      document.getElementById(ID.form),
+    input:                     document.getElementById(ID.input),
+    dropzone:                  document.getElementById(ID.dropzone),
+    emptyState:                document.getElementById(ID.emptyState),
+    previewWrapper:            document.getElementById(ID.previewWrapper),
+    previewList:               document.getElementById(ID.previewList),
+    annotationWorkspace:       document.getElementById(ID.annotationWorkspace),
+    annotationCanvasContainer: document.getElementById(ID.annotationCanvasContainer),
+    annotationFileLabel:       document.getElementById(ID.annotationFileLabel),
+    annotationClose:           document.getElementById(ID.annotationClose),
+    annotationSave:            document.getElementById(ID.annotationSave),
+    annotationStatus:          document.getElementById(ID.annotationStatus),
+    annotationToolbar:         document.getElementById(ID.annotationToolbar),
+    addButton:                 document.getElementById(ID.addButton),
+    errorText:                 document.getElementById(ID.errorText),
+    // Toolbar buttons di-scope ke toolbar container agar tidak bentrok lintas konteks
+    annotationToolButtons: [],
+    annotationColorButtons: [],
+    annotationUndo:   document.getElementById(ID.annotationUndo),
+    annotationRedo:   document.getElementById(ID.annotationRedo),
+    annotationDelete: document.getElementById(ID.annotationDelete),
+    annotationClearAll: document.getElementById(ID.annotationClearAll),
   };
+
+  // Scoped query: hanya ambil tool/color buttons dari toolbar yang relevan
+  if (elements.annotationToolbar) {
+    elements.annotationToolButtons = Array.from(
+      elements.annotationToolbar.querySelectorAll('[data-tool]')
+    );
+    elements.annotationColorButtons = Array.from(
+      elements.annotationToolbar.querySelectorAll('[data-color]')
+    );
+  }
 
   if (!elements.input || !elements.dropzone || !elements.previewList) return;
 
@@ -139,11 +195,24 @@ import Konva from 'konva';
   }
 
   function getPreviewUrl(fileItem) {
+    if (!fileItem) return '';
+
+    // Prioritaskan file hasil anotasi jika ada
+    const targetFile = fileItem.annotatedFile || fileItem.file;
+
     if (!previewUrlById.has(fileItem.id)) {
-      previewUrlById.set(fileItem.id, URL.createObjectURL(fileItem.file));
+      previewUrlById.set(fileItem.id, URL.createObjectURL(targetFile));
     }
 
     return previewUrlById.get(fileItem.id);
+  }
+
+  function refreshPreviewUrl(fileId) {
+    const item = state.files.find(f => f.id === fileId);
+    if (!item) return;
+
+    revokePreviewUrl(fileId);
+    getPreviewUrl(item); // Generate URL baru (akan otomatis pakai annotatedFile jika ada)
   }
 
   function revokePreviewUrl(fileId) {
@@ -347,6 +416,29 @@ import Konva from 'konva';
       statusElement.style.opacity = '0';
     }, 3000);
   }
+
+    // ── QA-only: hitung chrome height (header+toolbar+status) ──
+  function getQAChromeHeight() {
+    if (!IS_QA) return 0;
+
+    const workspace = elements.annotationWorkspace;
+    if (!workspace) return 100;
+
+    const shell = workspace.querySelector('.report-annotation-shell');
+    if (!shell) return 100;
+
+    const canvasArea = shell.querySelector('.report-annotation-canvas');
+    let chrome = 0;
+
+    for (const child of shell.children) {
+      if (child === canvasArea) continue;
+      chrome += child.offsetHeight || 0;
+    }
+
+    return chrome || 100;
+  }
+
+
 
   function getCanvasContainerWidth() {
     if (!elements.annotationCanvasContainer) return 0;
@@ -1007,6 +1099,12 @@ textarea.style.left = `${stageBox.left + textPosition.x * scaleX}px`;
       elements.annotationWorkspace.classList.add('hidden');
     }
 
+    if (IS_QA) {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      elements.annotationWorkspace?.classList.remove('is-landscape-mode');
+    }
+
     if (elements.annotationFileLabel) {
       elements.annotationFileLabel.textContent = '';
     }
@@ -1022,7 +1120,6 @@ textarea.style.left = `${stageBox.left + textPosition.x * scaleX}px`;
     resetToolSelectionState();
     syncToolbarAvailability();
   }
-
   async function initCanvas(record, { resetHistory = true } = {}) {
     try {
       cancelActiveTextEditing();
@@ -1041,6 +1138,11 @@ textarea.style.left = `${stageBox.left + textPosition.x * scaleX}px`;
         elements.annotationWorkspace.classList.remove('hidden');
       }
 
+      if (IS_QA) {
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+      }
+
       syncToolbarAvailability();
 
       if (elements.annotationFileLabel) {
@@ -1052,20 +1154,44 @@ textarea.style.left = `${stageBox.left + textPosition.x * scaleX}px`;
       imgEl.onload = async () => {
         if (state.canvasInitToken !== currentToken) return;
 
-        let containerWidth = getCanvasContainerWidth();
-        if (!containerWidth) {
-          await new Promise((r) => requestAnimationFrame(r));
-          if (state.canvasInitToken !== currentToken) return;
-          containerWidth = getCanvasContainerWidth();
-        }
-        if (!containerWidth) return;
+        const isMobile = window.innerWidth <= 640;
+        const isLandscape = imgEl.width > imgEl.height;
 
-        const scale = containerWidth / imgEl.width;
+        let scale, canvasW, canvasH;
+
+        if (IS_QA && isMobile && isLandscape) {
+          // ── Mobile Landscape: Fill height, scroll horizontally ──
+          elements.annotationWorkspace?.classList.add('is-landscape-mode');
+          
+          const chromeH = getQAChromeHeight();
+          // Full height minus chrome
+          const availH = window.innerHeight - chromeH;
+          scale = availH / imgEl.height;
+          canvasH = availH;
+          canvasW = Math.floor(imgEl.width * scale);
+        } else {
+          // ── Default: Fill width, scroll vertically ──
+          elements.annotationWorkspace?.classList.remove('is-landscape-mode');
+
+          let containerWidth = getCanvasContainerWidth();
+
+          if (!containerWidth) {
+            await new Promise((r) => requestAnimationFrame(r));
+            if (state.canvasInitToken !== currentToken) return;
+            containerWidth = getCanvasContainerWidth();
+          }
+
+          if (!containerWidth) return;
+
+          scale = containerWidth / imgEl.width;
+          canvasW = containerWidth;
+          canvasH = Math.floor(imgEl.height * scale);
+        }
 
         const stage = new Konva.Stage({
           container: elements.annotationCanvasContainer,
-          width: containerWidth,
-          height: imgEl.height * scale,
+          width: canvasW,
+          height: canvasH,
         });
 
         state.stage = stage;
@@ -1079,14 +1205,9 @@ textarea.style.left = `${stageBox.left + textPosition.x * scaleX}px`;
           rotateEnabled: false,
           keepRatio: false,
           enabledAnchors: [
-            'top-left',
-            'top-center',
-            'top-right',
-            'middle-left',
-            'middle-right',
-            'bottom-left',
-            'bottom-center',
-            'bottom-right',
+            'top-left', 'top-center', 'top-right',
+            'middle-left', 'middle-right',
+            'bottom-left', 'bottom-center', 'bottom-right',
           ],
         });
 
@@ -1195,11 +1316,13 @@ textarea.style.left = `${stageBox.left + textPosition.x * scaleX}px`;
         record.annotatedFile = annotatedFile;
         record.hasAnnotation = true;
 
+        // Paksa refresh URL preview agar memuat versi anotasi terbaru
+        refreshPreviewUrl(record.id);
+
         if (typeof DataTransfer !== 'undefined') {
           const dt = new DataTransfer();
           state.files.forEach((r) => dt.items.add(r.annotatedFile || r.file));
-          const input = document.getElementById('attachments');
-          if (input) input.files = dt.files;
+          if (elements.input) elements.input.files = dt.files;
         }
 
         renderPreviewList();
@@ -1847,7 +1970,7 @@ function bindLiveValidationEvents() {
     syncToolbarAvailability();
     bindLiveValidationEvents();
 
-    if (elements.form) {
+    if (elements.form && !IS_QA) {
       elements.form.addEventListener('submit', (event) => {
         const isValid = validateAllFields({ focusOnError: true });
 
@@ -1859,22 +1982,59 @@ function bindLiveValidationEvents() {
 
     window.addEventListener('keydown', handleCanvasKeyboardShortcuts);
 
+    // QA fullscreen overlay: ESC menutup workspace
+    if (IS_QA) {
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && elements.annotationWorkspace && !elements.annotationWorkspace.classList.contains('hidden')) {
+          event.preventDefault();
+          closeAnnotationWorkspace();
+        }
+      });
+    }
+
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
         if (!state.stage || !state.baseImageWidth || !state.baseImageHeight) return;
-        const container = elements.annotationCanvasContainer;
-        if (!container) return;
-        const containerWidth = Math.floor(container.offsetWidth);
-        if (!containerWidth) return;
-        const scale = containerWidth / state.baseImageWidth;
-        state.stage.width(containerWidth);
-        state.stage.height(Math.floor(state.baseImageHeight * scale));
-        state.stage.scale({ x: scale, y: scale });
+
+        const isMobile = window.innerWidth <= 640;
+        const isLandscape = state.baseImageWidth > state.baseImageHeight;
+
+        let scale, canvasW, canvasH;
+
+        if (IS_QA && isMobile && isLandscape) {
+          elements.annotationWorkspace?.classList.add('is-landscape-mode');
+          const chromeH = getQAChromeHeight();
+          const availH = window.innerHeight - chromeH;
+          scale = availH / state.baseImageHeight;
+          canvasH = availH;
+          canvasW = Math.floor(state.baseImageWidth * scale);
+        } else {
+          elements.annotationWorkspace?.classList.remove('is-landscape-mode');
+          const container = elements.annotationCanvasContainer;
+          if (!container) return;
+
+          const containerWidth = Math.floor(container.offsetWidth);
+          if (!containerWidth) return;
+
+          scale = containerWidth / state.baseImageWidth;
+          canvasW = containerWidth;
+          canvasH = Math.floor(state.baseImageHeight * scale);
+        }
+
+        state.stageScale = scale;
+        state.stage.width(canvasW);
+        state.stage.height(canvasH);
+
+        if (state.imageNode) {
+          state.imageNode.scaleX(scale);
+          state.imageNode.scaleY(scale);
+        }
+
         state.stage.batchDraw();
       }, 200);
     });
-
+    
     renderPreviewList();
 
     window.addEventListener('beforeunload', () => {

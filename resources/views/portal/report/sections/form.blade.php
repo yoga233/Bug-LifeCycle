@@ -117,6 +117,54 @@
                                         <p id="error-guest_email" class="report-field-error report-error-text hidden"></p>
                                     @enderror
                                 </div>
+
+                                <div class="report-field">
+                                    <label for="guest_company" class="report-field-label">
+                                        <span data-report-i18n="report_label_guest_company">Company / Organization</span>
+                                    </label>
+                                    <input
+                                        id="guest_company"
+                                        name="guest_company"
+                                        value="{{ old('guest_company') }}"
+                                        data-required="true"
+                                        data-field-label="Company / Organization"
+                                        data-report-i18n-field-label="report_field_label_guest_company"
+                                        data-error-id="error-guest_company"
+                                        class="{{ $fieldBase }} {{ $errors->has('guest_company') ? $fieldError : $fieldNormal }}"
+                                        placeholder="PT Example Indonesia"
+                                        data-report-i18n-placeholder="report_placeholder_guest_company"
+                                        aria-invalid="{{ $errors->has('guest_company') ? 'true' : 'false' }}"
+                                    />
+                                    @error('guest_company')
+                                        <p id="error-guest_company" class="report-field-error report-error-text" data-report-error-field="guest_company">{{ $message }}</p>
+                                    @else
+                                        <p id="error-guest_company" class="report-field-error report-error-text hidden"></p>
+                                    @enderror
+                                </div>
+
+                                <div class="report-field">
+                                    <label for="guest_position" class="report-field-label">
+                                        <span data-report-i18n="report_label_guest_position">Job Title</span>
+                                    </label>
+                                    <input
+                                        id="guest_position"
+                                        name="guest_position"
+                                        value="{{ old('guest_position') }}"
+                                        data-required="true"
+                                        data-field-label="Job title"
+                                        data-report-i18n-field-label="report_field_label_guest_position"
+                                        data-error-id="error-guest_position"
+                                        class="{{ $fieldBase }} {{ $errors->has('guest_position') ? $fieldError : $fieldNormal }}"
+                                        placeholder="QA Engineer"
+                                        data-report-i18n-placeholder="report_placeholder_guest_position"
+                                        aria-invalid="{{ $errors->has('guest_position') ? 'true' : 'false' }}"
+                                    />
+                                    @error('guest_position')
+                                        <p id="error-guest_position" class="report-field-error report-error-text" data-report-error-field="guest_position">{{ $message }}</p>
+                                    @else
+                                        <p id="error-guest_position" class="report-field-error report-error-text hidden"></p>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
                     </section>

@@ -11,9 +11,11 @@
     html { overflow-y: scroll; }
 </style>
         @include('layouts.partials.head', ['title' => trim($__env->yieldContent('title', config('app.name', 'DevPanel')))])
+        @stack('styles')
     </head>
 
-    <body class="font-sans antialiased">
+    <body class="font-sans antialiased" @stack('body-attrs')>
         @yield('body')
+        @stack('scripts')
     </body>
 </html>

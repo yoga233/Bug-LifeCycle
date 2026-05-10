@@ -21,6 +21,7 @@ use App\Http\Controllers\Programmer\NotificationController as ProgrammerNotifica
 use App\Http\Controllers\Programmer\PerformanceController as ProgrammerPerformanceController;
 use App\Http\Controllers\QA\BugValidationController;
 use App\Http\Controllers\QA\BugController as QABugController;
+use App\Http\Controllers\QA\BugCommentController as QABugCommentController;
 use App\Http\Controllers\QA\TestingQueueController;
 use App\Http\Controllers\QA\NotificationController as QANotificationController;
 use Illuminate\Support\Facades\Route;
@@ -175,6 +176,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/notifications/{notification}/read', [QANotificationController::class, 'markRead'])->name('notifications.read');
 
             Route::get('/bugs/{bug}', [QABugController::class, 'show'])->name('bugs.show');
+            Route::post('/bugs/{bug}/comments', [QABugCommentController::class, 'store'])->name('bugs.comments.store');
 
             Route::post('/bugs/{bug}/approve', [BugValidationController::class, 'approve'])->name('bugs.approve');
             Route::post('/bugs/{bug}/reject', [BugValidationController::class, 'reject'])->name('bugs.reject');
