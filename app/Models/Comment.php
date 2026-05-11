@@ -11,7 +11,13 @@ class Comment extends Model
         'bug_id',
         'user_id',
         'content',
+        'type',
     ];
+
+    public function attachments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Attachment::class);
+    }
 
     public function bug(): BelongsTo
     {

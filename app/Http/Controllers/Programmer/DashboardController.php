@@ -38,6 +38,9 @@ class DashboardController extends Controller
             ])
             ->where('assignee_id', $user->id)
             ->whereIn('status', $activeStatuses)
+            ->withCount(['comments as rejection_comments_count' => function($q) {
+                $q->where('type', 'rejection');
+            }])
             ->latest(); // <-- Ubah bagian ini
 
         $tasks = $tasksQuery

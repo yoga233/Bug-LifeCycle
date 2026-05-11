@@ -162,7 +162,12 @@
                         : $createdAt->translatedFormat('d M Y'))
                     : '—';
 
+                $isRevision = ($bug->status === 'In Progress' && ($bug->rejection_comments_count ?? 0) > 0);
+                
                 $sl = $statusLabel($bug->status);
+                if ($isRevision) {
+                    $sl = ['text' => 'Revisi (Perlu Perbaikan)', 'class' => 'text-rose-600'];
+                }
             @endphp
 
             <div class="group px-5 py-5 transition-colors duration-150 hover:bg-[rgba(138,11,78,0.022)]">
@@ -181,7 +186,9 @@
                                 <x-priority-badge :priority="$bug->priority" />
                             @endif
 
-                            <x-pm.status-badge :status="$bug->status" />
+                            <x-pm.status-badge :status="$isRevision ? 'Rejected' : $bug->status">
+                                {{ $isRevision ? 'Revisi' : null }}
+                            </x-pm.status-badge>
                         </div>
 
                         {{-- Baris 2: Judul + SLA suffix --}}

@@ -598,7 +598,7 @@
                         </p>
 
                         <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            @forelse ($bug->attachments as $file)
+                            @forelse ($bug->attachments->where('comment_id', null) as $file)
                                 @php
                                     $fileName  = (string) ($file->file_name ?? 'file');
                                     $fileType  = strtolower((string) ($file->file_type ?? ''));
@@ -639,6 +639,89 @@
                     </div>
                 </div>
             </section>
+            
+            {{-- Revisi (QA Rejection) --}}
+            @php
+                $rejectionComments = $bug->comments->where('type', 'rejection')->sortBy('created_at');
+            @endphp
+
+            @if ($rejectionComments->count() > 0)
+                <section class="overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-sm">
+                    <div class="border-b border-rose-100 bg-rose-50/30 px-6 py-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-rose-600/80">
+                                    Pusat Revisi
+                                </p>
+                                <p class="mt-1 text-sm font-semibold text-slate-800">Riwayat Penolakan QA</p>
+                            </div>
+                            <span class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-rose-700">
+                                {{ $rejectionComments->count() }} Revisi
+                            </span>
+                        </div>
+                        <p class="mt-2 text-sm text-slate-500">
+                            Riwayat instruksi perbaikan yang pernah dikirimkan ke programmer.
+                        </p>
+                    </div>
+
+                    <div class="divide-y divide-rose-100">
+                        @foreach ($rejectionComments as $index => $rev)
+                            <div class="px-6 py-6 transition-colors hover:bg-rose-50/10">
+                                <div class="flex items-start gap-4">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600 shadow-sm">
+                                        <span class="text-xs font-bold">#{{ $loop->iteration }}</span>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-sm font-bold text-slate-800">{{ $rev->user?->name }}</span>
+                                                <span class="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium text-slate-500">QA Specialist (You)</span>
+                                            </div>
+                                            <span class="text-[11px] text-slate-400">{{ $rev->created_at?->timezone(config('app.timezone'))?->format('d M Y, H:i') }}</span>
+                                        </div>
+
+                                        <div class="prose prose-sm max-w-none text-slate-700">
+                                            <p class="whitespace-pre-line leading-relaxed">{{ $rev->content }}</p>
+                                        </div>
+
+                                        {{-- Lampiran Revisi --}}
+                                        @if ($rev->attachments->count() > 0)
+                                            <div class="mt-4 flex flex-wrap gap-3">
+                                                @foreach ($rev->attachments as $att)
+                                                    @php
+                                                        $attName = (string) ($att->file_name ?? 'file');
+                                                        $attType = strtolower((string) ($att->file_type ?? ''));
+                                                        $isAttImage = str_starts_with($attType, 'image/') || preg_match('/\.(png|jpe?g|gif|webp)$/i', $attName);
+                                                        $attUrl = asset('storage/' . $att->file_path);
+                                                    @endphp
+                                                    <a 
+                                                        href="{{ $attUrl }}" 
+                                                        target="_blank" 
+                                                        class="group relative flex h-24 w-32 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 transition-all hover:border-rose-300 hover:ring-2 hover:ring-rose-50"
+                                                        title="{{ $attName }}"
+                                                    >
+                                                        @if ($isAttImage)
+                                                            <img src="{{ $attUrl }}" alt="{{ $attName }}" class="h-full w-full object-cover transition-transform group-hover:scale-105">
+                                                            <div class="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                                                                <span class="truncate text-[9px] text-white">{{ $attName }}</span>
+                                                            </div>
+                                                        @else
+                                                            <div class="flex flex-col items-center gap-1 p-2 text-center">
+                                                                <span class="text-2xl">📄</span>
+                                                                <span class="line-clamp-1 text-[9px] font-medium text-slate-600">{{ $attName }}</span>
+                                                            </div>
+                                                        @endif
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
 
             {{-- Komentar --}}
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -658,7 +741,7 @@
                             ...pmCommentSection({
                                 postUrl: '{{ route('qa.bugs.comments.store', $bug) }}',
                                 csrf: '{{ csrf_token() }}',
-                                initialComments: {{ $bug->comments->map(fn($c) => [
+                                initialComments: {{ $bug->comments->where('type', 'discussion')->map(fn($c) => [
                                     'id'           => $c->id,
                                     'content'      => $c->content,
                                     'user_name'    => $c->user?->name,
@@ -793,7 +876,7 @@
                             method="POST"
                             enctype="multipart/form-data"
                             class="space-y-4"
-                            @submit.prevent="postForm($el.action, new FormData($el))"
+                            @submit.prevent="postForm($el.action, new FormData($el)).then(res => { if(res) window.location.reload(); })"
                         >
                             @csrf
 

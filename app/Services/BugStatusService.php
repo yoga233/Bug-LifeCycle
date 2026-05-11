@@ -28,7 +28,7 @@ class BugStatusService
 
         $this->assertAllowedTransition($fromStatus, $toStatus);
 
-        return DB::transaction(function () use ($bug, $fromStatus, $toStatus, $actor) {
+        return DB::transaction(function () use ($bug, $fromStatus, $toStatus, $actor, $tickets) {
             $bug->forceFill(['status' => $toStatus]);
             $bug->save();
 

@@ -56,11 +56,13 @@ class BugValidationController extends Controller
         $reason = trim((string) ($request->input('reason', '')));
 
         // ── Simpan komentar alasan penolakan ──────────────────────────────
+        $comment = null;
         if ($reason !== '') {
-            Comment::create([
+            $comment = Comment::create([
                 'bug_id'  => $bug->id,
                 'user_id' => $request->user()->id,
-                'content' => '[QA Dikembalikan] '.$reason,
+                'content' => $reason,
+                'type'    => 'rejection',
             ]);
         }
 
@@ -80,6 +82,7 @@ class BugValidationController extends Controller
                 if ($path) {
                     $bug->attachments()->create([
                         'uploaded_by' => $request->user()->id,
+                        'comment_id'  => $comment?->id,
                         'file_path'   => $path,
                         'file_name'   => $file->getClientOriginalName(),
                         'file_type'   => $file->getMimeType(),

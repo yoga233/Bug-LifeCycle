@@ -11,6 +11,7 @@ class Attachment extends Model
 
     protected $fillable = [
         'bug_id',
+        'comment_id',
         'uploaded_by',
         'file_path',
         'file_name',
@@ -28,6 +29,11 @@ class Attachment extends Model
     public function bug(): BelongsTo
     {
         return $this->belongsTo(Bug::class);
+    }
+
+    public function comment(): BelongsTo
+    {
+        return $this->belongsTo(Comment::class);
     }
 
     public function uploader(): BelongsTo
