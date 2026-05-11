@@ -308,7 +308,7 @@
                         </p>
 
                         <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            @forelse ($bug->attachments->where('comment_id', null) as $file)
+                            @forelse ($bug->attachments->filter(fn($a) => is_null($a->comment_id) && is_null($a->uploaded_by)) as $file)
                                 @php
                                     $fileName  = (string) ($file->file_name ?? 'file');
                                     $fileType  = strtolower((string) ($file->file_type ?? ''));
@@ -356,8 +356,8 @@
             @endphp
 
             @if ($rejectionComments->count() > 0)
-                <section class="overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-sm">
-                    <div class="border-b border-rose-100 bg-rose-50/30 px-6 py-5">
+                <section class="overflow-visible rounded-2xl border border-rose-200 bg-white shadow-sm">
+                    <div class="rounded-t-2xl border-b border-rose-100 bg-rose-50/30 px-6 py-5">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-rose-600/80">
@@ -366,7 +366,7 @@
                                 <p class="mt-1 text-sm font-semibold text-slate-800">Instruksi Perbaikan QA</p>
                             </div>
                             <span class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-rose-700">
-                                {{ $rejectionComments->count() }} Revisi
+                                {{ $rejectionComments->count() }} Siklus Penolakan
                             </span>
                         </div>
                         <p class="mt-2 text-sm text-slate-500">
@@ -378,8 +378,30 @@
                         @foreach ($rejectionComments as $index => $rev)
                             <div class="px-6 py-6 transition-colors hover:bg-rose-50/10">
                                 <div class="flex items-start gap-4">
-                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600 shadow-sm">
-                                        <span class="text-xs font-bold">#{{ $loop->iteration }}</span>
+                                    <div 
+                                        class="relative inline-flex"
+                                        x-data="{ open: false }"
+                                        @mouseenter="open = true"
+                                        @mouseleave="open = false"
+                                    >
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600 shadow-sm cursor-help">
+                                            <span class="text-xs font-bold">#{{ $loop->iteration }}</span>
+                                        </div>
+
+                                        <div
+                                            x-cloak
+                                            x-show="open"
+                                            x-transition:enter="transition duration-150 ease-out"
+                                            x-transition:enter-start="opacity-0 translate-y-1"
+                                            x-transition:enter-end="opacity-100 translate-y-0"
+                                            x-transition:leave="transition duration-100 ease-in"
+                                            x-transition:leave-start="opacity-100 translate-y-0"
+                                            x-transition:leave-end="opacity-0 translate-y-1"
+                                            class="absolute bottom-full left-1/2 z-20 mb-2 w-max -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 shadow-xl"
+                                        >
+                                            Siklus Penolakan #{{ $loop->iteration }}
+                                            <div class="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-b border-r border-slate-200 bg-white"></div>
+                                        </div>
                                     </div>
                                     <div class="min-w-0 flex-1">
                                         <div class="mb-2 flex flex-wrap items-center justify-between gap-2">

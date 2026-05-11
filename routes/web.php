@@ -44,7 +44,7 @@ Route::get('/', function () {
 Route::view('/portal', 'portal.landing.index')->name('client.landing');
 Route::get('/report', [BugReportController::class, 'create'])->name('client.report');
 Route::post('/report', [BugReportController::class, 'store'])->name('client.report.store');
-Route::view('/report/success', 'portal.report.success')->name('report.report.success');
+Route::view('/report/success', 'portal.report.success')->name('client.report.success');
 Route::get('/track', [BugTrackingController::class, 'show'])->name('client.tracking');
 Route::post('/portal/language', [ClientPortalLanguageController::class, 'store'])->name('client.language.store');
 

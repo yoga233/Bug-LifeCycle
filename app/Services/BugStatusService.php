@@ -29,7 +29,7 @@ class BugStatusService
         $this->assertAllowedTransition($fromStatus, $toStatus);
 
         return DB::transaction(function () use ($bug, $fromStatus, $toStatus, $actor, $tickets) {
-            $bug->forceFill(['status' => $toStatus]);
+            $this->handleSlaLogic($bug, $fromStatus, $toStatus);
             $bug->save();
 
             $qaIds = null;
@@ -193,6 +193,47 @@ class BugStatusService
             'Rejected' => 'Dikembalikan',
             default => $status,
         };
+    }
+
+    private function handleSlaLogic(Bug $bug, string $fromStatus, string $toStatus): void
+    {
+        $now = now();
+        $bug->loadMissing('priority');
+
+        // 1. START: Saat PM menugaskan ke programmer (Reported -> Assigned)
+        if ($fromStatus === 'Reported' && $toStatus === 'Assigned') {
+            if ($bug->priority && $bug->priority->sla_hours > 0) {
+                $bug->remaining_sla_minutes = $bug->priority->sla_hours * 60;
+                $bug->due_at = $now->copy()->addMinutes($bug->remaining_sla_minutes);
+            }
+        }
+
+        // 2. PAUSE: Saat masuk ke tahap Testing (Clock stops)
+        if ($toStatus === 'Testing' && $bug->due_at) {
+            $bug->remaining_sla_minutes = (int) $now->diffInMinutes($bug->due_at, false);
+            $bug->due_at = null;
+        }
+
+        // 3. RESUME: Saat dikembalikan ke programmer (Testing -> In Progress / Rejected)
+        // Catatan: Jika dari Testing kembali ke In Progress, jam lanjut lagi.
+        if ($fromStatus === 'Testing' && in_array($toStatus, ['In Progress', 'Assigned', 'Rejected'])) {
+            if ($bug->remaining_sla_minutes !== null) {
+                $bug->due_at = $now->copy()->addMinutes($bug->remaining_sla_minutes);
+            }
+        }
+
+        // 4. FINISH / RESET: Saat bug diselesaikan atau dibatalkan penugasannya (Unassigned)
+        if (in_array($toStatus, ['Resolved', 'Closed', 'Reported'])) {
+            if ($toStatus === 'Reported') {
+                $bug->remaining_sla_minutes = null;
+            } elseif ($bug->due_at) {
+                $bug->remaining_sla_minutes = (int) $now->diffInMinutes($bug->due_at, false);
+            }
+            $bug->due_at = null;
+        }
+
+        // Update status field as well
+        $bug->status = $toStatus;
     }
 
     private function assertAllowedTransition(string $from, string $to): void

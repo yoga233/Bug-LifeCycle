@@ -163,27 +163,18 @@ class OverviewController extends Controller
         };
 
         // ── SLA Terlewat ──
-        $driver = DB::connection()->getDriverName();
-
-        $overdueSlaCountQuery = Bug::query()
-            ->join('priorities', 'priorities.id', '=', 'bugs.priority_id')
-            ->whereIn('bugs.status', $openStatuses)
-            ->whereNotNull('bugs.priority_id')
-            ->where('priorities.sla_hours', '>', 0);
-
-        if ($driver === 'sqlite') {
-            $overdueSlaCountQuery->whereRaw(
-                "datetime(bugs.created_at, '+' || priorities.sla_hours || ' hours') < ?",
-                [$now->toDateTimeString()]
-            );
-        } else {
-            $overdueSlaCountQuery->whereRaw(
-                'DATE_ADD(bugs.created_at, INTERVAL priorities.sla_hours HOUR) < ?',
-                [$now->toDateTimeString()]
-            );
-        }
-
-        $overdueSlaCount = (int) $overdueSlaCountQuery->count('bugs.id');
+        $overdueSlaCount = (int) Bug::query()
+            ->whereIn('status', $openStatuses)
+            ->where(function ($q) use ($now) {
+                $q->whereNotNull('due_at')
+                  ->where('due_at', '<', $now)
+                  ->orWhere(function ($sq) {
+                      $sq->whereNull('due_at')
+                         ->where('remaining_sla_minutes', '<', 0)
+                         ->whereIn('status', ['Assigned', 'In Progress', 'Testing']);
+                  });
+            })
+            ->count('id');
 
         $slaVariant = match (true) {
             $overdueSlaCount === 0 => 'neutral',

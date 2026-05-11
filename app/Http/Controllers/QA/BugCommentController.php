@@ -24,6 +24,7 @@ class BugCommentController extends Controller
             'bug_id'  => $bug->id,
             'user_id' => $user->id,
             'content' => $validated['content'],
+            'type'    => 'discussion',
         ]);
 
         if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {

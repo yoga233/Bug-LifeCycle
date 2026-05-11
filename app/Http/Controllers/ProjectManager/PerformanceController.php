@@ -232,6 +232,7 @@ class PerformanceController extends Controller
                 'bugs.id as bug_id',
                 'bugs.title as bug_title',
                 'bugs.created_at as bug_created_at',
+                'bugs.remaining_sla_minutes as final_remaining_minutes',
                 'priorities.sla_hours as target_sla_hours',
             ])
             ->orderByDesc('bug_status_histories.changed_at')
@@ -247,25 +248,25 @@ class PerformanceController extends Controller
                     ? (int) $row->target_sla_hours
                     : null;
 
-                $actualMinutes = null;
-                if ($resolvedAt && $createdAt) {
-                    $actualMinutes = max(0, $createdAt->diffInMinutes($resolvedAt, false));
-                }
-
                 $targetSlaMinutes = $targetSlaHours !== null
                     ? ($targetSlaHours * 60)
                     : null;
+
+                $actualMinutes = null;
+                if ($targetSlaMinutes !== null && $row->final_remaining_minutes !== null) {
+                    $actualMinutes = $targetSlaMinutes - (int) $row->final_remaining_minutes;
+                }
 
                 $isEvaluable = $targetSlaHours !== null
                     && $targetSlaHours > 0
                     && $actualMinutes !== null;
 
-                $deltaMinutes = ($isEvaluable && $targetSlaMinutes !== null && $actualMinutes !== null)
-                    ? ($actualMinutes - $targetSlaMinutes)
+                $deltaMinutes = ($isEvaluable && $row->final_remaining_minutes !== null)
+                    ? -((int) $row->final_remaining_minutes)
                     : null;
 
                 $isOnTime = $isEvaluable
-                    ? $actualMinutes <= ($targetSlaMinutes ?? 0)
+                    ? (int) $row->final_remaining_minutes >= 0
                     : null;
 
                 $status = $isEvaluable
@@ -492,11 +493,11 @@ class PerformanceController extends Controller
 
     private function aggregateResolvedPerProgrammer(?Carbon $fromAt, ?Carbon $toAt, array $programmerIds): Collection
     {
-        $actualMinutesExpr = 'GREATEST(TIMESTAMPDIFF(MINUTE, bugs.created_at, bug_status_histories.changed_at), 0)';
         $targetMinutesExpr = '(priorities.sla_hours * 60)';
-        $isEvaluableExpr = 'priorities.sla_hours IS NOT NULL AND priorities.sla_hours > 0 AND bugs.created_at IS NOT NULL AND bug_status_histories.changed_at IS NOT NULL';
-        $isMetExpr = "({$isEvaluableExpr} AND {$actualMinutesExpr} <= {$targetMinutesExpr})";
-        $isBreachedExpr = "({$isEvaluableExpr} AND {$actualMinutesExpr} > {$targetMinutesExpr})";
+        $actualMinutesExpr = "({$targetMinutesExpr} - bugs.remaining_sla_minutes)";
+        $isEvaluableExpr = 'priorities.sla_hours IS NOT NULL AND priorities.sla_hours > 0 AND bugs.remaining_sla_minutes IS NOT NULL';
+        $isMetExpr = "({$isEvaluableExpr} AND bugs.remaining_sla_minutes >= 0)";
+        $isBreachedExpr = "({$isEvaluableExpr} AND bugs.remaining_sla_minutes < 0)";
 
         $query = BugStatusHistory::query()
             ->join('bugs', 'bug_status_histories.bug_id', '=', 'bugs.id')

@@ -137,9 +137,9 @@ class IssueController extends Controller
             'priority:id,level,sla_hours,bg_color,text_color',
             'severity:id,level,bg_color,text_color',
             'assignee:id,name',
-            'attachments:id,bug_id,file_path,file_name,file_type,file_size,created_at',
+            'attachments:id,bug_id,uploaded_by,comment_id,file_path,file_name,file_type,file_size,created_at',
             'comments' => fn ($q) => $q
-                ->select(['id', 'bug_id', 'user_id', 'content', 'created_at'])
+                ->select(['id', 'bug_id', 'user_id', 'content', 'type', 'created_at'])
                 ->orderByDesc('created_at'),
             'comments.user:id,name',
             'statusHistories' => fn ($q) => $q

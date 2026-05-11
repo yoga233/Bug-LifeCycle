@@ -24,6 +24,7 @@ class IssueCommentController extends Controller
             'bug_id' => $bug->id,
             'user_id' => $user->id,
             'content' => $validated['content'],
+            'type' => 'discussion',
         ]);
 
         // For AJAX comment submission we return JSON (no page reload).

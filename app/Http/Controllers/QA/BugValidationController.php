@@ -57,11 +57,11 @@ class BugValidationController extends Controller
 
         // ── Simpan komentar alasan penolakan ──────────────────────────────
         $comment = null;
-        if ($reason !== '') {
+        if ($reason !== '' || $request->hasFile('attachments')) {
             $comment = Comment::create([
                 'bug_id'  => $bug->id,
                 'user_id' => $request->user()->id,
-                'content' => $reason,
+                'content' => $reason !== '' ? $reason : 'Penolakan dengan lampiran gambar (tanpa catatan tambahan).',
                 'type'    => 'rejection',
             ]);
         }

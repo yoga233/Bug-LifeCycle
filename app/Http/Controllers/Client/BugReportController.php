@@ -301,13 +301,7 @@ class BugReportController extends Controller
                 'status' => 'Reported',
             ]);
 
-            BugStatusHistory::create([
-                'bug_id' => $bug->id,
-                'user_id' => null,
-                'old_status' => 'Reported',
-                'new_status' => 'Reported',
-                'changed_at' => now(),
-            ]);
+            // Initial status is Reported by default, no history needed until first transition.
 
             $files = $request->file('attachments', []);
             foreach ($files as $file) {

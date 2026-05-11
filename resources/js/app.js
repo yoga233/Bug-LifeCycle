@@ -29,8 +29,8 @@ window.pmCommentSection = function pmCommentSection({ postUrl, csrf, initialComm
 
             for (const c of src) {
                 const last = groups[groups.length - 1];
-                const sameUser = last?.user_name && c?.user_name && last.user_name === c.user_name;
-                const sameTime = last?.created_at && c?.created_at && last.created_at === c.created_at;
+                const sameUser = (last && last.user_name) && (c && c.user_name) && (last.user_name === c.user_name);
+                const sameTime = (last && last.created_at) && (c && c.created_at) && (last.created_at === c.created_at);
 
                 if (last && sameUser && sameTime) {
                     last.items.push({

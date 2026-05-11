@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ $clientPortalLang ?? 'en' }}">
 <head>
-    @include('portal.client.landing.partials.head', [
+    @include('layouts.partials.portal-head', [
         'title' => 'PRANALA BLMS — Report Submitted',
         'description' => 'Your report has been received. Save the ticket ID and track progress anytime.',
         'includeStyles' => false,
@@ -456,11 +456,10 @@
 </head>
 
 <body class="report-success-page" data-page="client-report-success" data-i18n-ready-expected="2">
-    @include('portal.client.landing.partials.skip-link')
-    @include('portal.client.landing.partials.nav', [
+    @include('portal.landing.partials.nav', [
         'landingSectionBase' => route('client.landing'),
     ])
-    @include('portal.client.landing.partials.mobile-menu', [
+    @include('portal.landing.partials.mobile-menu', [
         'landingSectionBase' => route('client.landing'),
     ])
 

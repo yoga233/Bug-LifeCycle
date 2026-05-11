@@ -11,7 +11,7 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, TicketService $tickets): View
     {
         $user = $request->user();
 
@@ -29,6 +29,8 @@ class DashboardController extends Controller
                 'guest_name',
                 'title',
                 'status',
+                'due_at',
+                'remaining_sla_minutes',
                 'created_at',
                 'updated_at',
             ])
@@ -41,16 +43,14 @@ class DashboardController extends Controller
             ->withCount(['comments as rejection_comments_count' => function($q) {
                 $q->where('type', 'rejection');
             }])
-            ->latest(); // <-- Ubah bagian ini
+            ->latest();
 
         $tasks = $tasksQuery
             ->get();
 
-        // Add computed SLA due_at for rendering (keep as view-only attribute)
-        $tasks->transform(function (Bug $bug) {
-            $sla = $bug->priority?->sla_hours;
-            $bug->due_at = $sla ? $bug->created_at->copy()->addHours($sla) : null;
-
+        // Attach derived ticket display and SLA handling
+        $tasks->transform(function (Bug $bug) use ($tickets) {
+            $bug->setAttribute('ticket', $tickets->fromBugId($bug->id));
             return $bug;
         });
 

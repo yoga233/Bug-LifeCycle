@@ -31,6 +31,7 @@ class Bug extends Model
     {
         return [
             'deleted_at' => 'datetime',
+            'due_at'     => 'datetime',
         ];
     }
 
