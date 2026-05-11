@@ -7,6 +7,7 @@ use App\Models\Bug;
 use App\Models\Notification;
 use App\Models\User;
 use App\Services\BugStatusService;
+use App\Services\TicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ use InvalidArgumentException;
 
 class BugAssignmentController extends Controller
 {
-    public function updatePriority(Bug $bug, Request $request): RedirectResponse|JsonResponse
+    public function updatePriority(Bug $bug, Request $request, TicketService $tickets): RedirectResponse|JsonResponse
     {
         // Priority can only be set/changed while bug is still freshly reported.
         if ($bug->status !== 'Reported') {
@@ -37,13 +38,15 @@ class BugAssignmentController extends Controller
 
         $bug->load('priority');
 
-        $message = 'Prioritas bug #'.$bug->id.' diset ke '.$bug->priority?->level.'.';
+        $ticketId = $tickets->fromBugId($bug->id);
+        $message = 'Prioritas bug #'.$ticketId.' diset ke '.$bug->priority?->level.'.';
 
         if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
             return response()->json([
                 'message' => $message,
                 'bug' => [
                     'id' => $bug->id,
+                    'ticket' => $ticketId,
                     'status' => $bug->status,
                     'priority' => [
                         'id' => $bug->priority?->id,
@@ -53,13 +56,14 @@ class BugAssignmentController extends Controller
                         'text_color' => $bug->priority?->text_color,
                     ],
                 ],
+                'timeline' => $this->getTimelineData($bug),
             ], 200);
         }
 
         return back()->with('status', $message);
     }
 
-    public function assign(Bug $bug, Request $request, BugStatusService $statusService): RedirectResponse|JsonResponse
+    public function assign(Bug $bug, Request $request, BugStatusService $statusService, TicketService $tickets): RedirectResponse|JsonResponse
     {
         // Rules:
         // - Assign/Reassign is allowed only when bug is Reported or Assigned (early stage)
@@ -111,7 +115,7 @@ class BugAssignmentController extends Controller
         // Move Reported -> Assigned and write history
         try {
             if ($bug->status === 'Reported') {
-                $statusService->transition($bug, 'Assigned', $request->user());
+                $statusService->transition($bug, 'Assigned', $request->user(), $tickets);
             }
         } catch (InvalidArgumentException $e) {
             $msg = $e->getMessage();
@@ -122,36 +126,40 @@ class BugAssignmentController extends Controller
             return back()->with('error', $msg);
         }
 
+        $ticketId = $tickets->fromBugId($bug->id);
+
         // Notify assignee (DB-backed notifications table)
         Notification::create([
             'user_id' => $assignee->id,
             'related_id' => $bug->id,
             'type' => 'BugAssigned',
-            'message' => __('messages.assignment.bug_assigned_notification', ['id' => $bug->id, 'title' => $bug->title]),
+            'message' => __('messages.assignment.bug_assigned_notification', ['id' => $ticketId, 'title' => $bug->title]),
             'is_read' => false,
             'created_at' => now(),
         ]);
 
-        $msg = 'Bug #'.$bug->id.' berhasil ditugaskan ke '.$assignee->name.'.';
+        $msg = 'Bug #'.$ticketId.' berhasil ditugaskan ke '.$assignee->name.'.';
 
         if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
             return response()->json([
                 'message' => $msg,
                 'bug' => [
                     'id' => $bug->id,
+                    'ticket' => $ticketId,
                     'status' => $bug->status,
                     'assignee' => [
                         'id' => $assignee->id,
                         'name' => $assignee->name,
                     ],
                 ],
+                'timeline' => $this->getTimelineData($bug),
             ], 200);
         }
 
         return back()->with('status', $msg);
     }
 
-    public function unassign(Bug $bug, Request $request, BugStatusService $statusService): RedirectResponse|JsonResponse
+    public function unassign(Bug $bug, Request $request, BugStatusService $statusService, TicketService $tickets): RedirectResponse|JsonResponse
     {
         // Rules:
         // - Unassign only allowed when status is Assigned (not started yet)
@@ -168,7 +176,7 @@ class BugAssignmentController extends Controller
         $bug->save();
 
         try {
-            $statusService->transition($bug, 'Reported', $request->user());
+            $statusService->transition($bug, 'Reported', $request->user(), $tickets);
         } catch (InvalidArgumentException $e) {
             $msg = $e->getMessage();
             if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
@@ -185,12 +193,37 @@ class BugAssignmentController extends Controller
                 'message' => $msg,
                 'bug' => [
                     'id' => $bug->id,
+                    'ticket' => $tickets->fromBugId($bug->id),
                     'status' => $bug->status,
                     'assignee' => null,
                 ],
+                'timeline' => $this->getTimelineData($bug),
             ], 200);
         }
 
         return back()->with('status', $msg);
+    }
+
+    private function getTimelineData(Bug $bug): array
+    {
+        $bug->load('statusHistories');
+        $histories = $bug->statusHistories->sortBy('changed_at')->values();
+        $events = collect();
+
+        $events->push([
+            'status' => $histories->first()?->old_status ?? $bug->status,
+            'at' => $bug->created_at?->timezone(config('app.timezone'))?->format('d M Y, H:i'),
+        ]);
+
+        foreach ($histories as $h) {
+            $events->push([
+                'status' => $h->new_status,
+                'old_status' => $h->old_status,
+                'at' => $h->changed_at?->timezone(config('app.timezone'))?->format('d M Y, H:i'),
+                'is_revision' => ($h->old_status === 'Testing' && $h->new_status === 'In Progress'),
+            ]);
+        }
+
+        return $events->values()->toArray();
     }
 }

@@ -283,12 +283,12 @@ class PerformanceController extends Controller
                     $detailNote = 'SLA belum dapat dihitung';
                 }
 
-                $ticketLabel = $bugId > 0 ? ('#'.$bugId) : '-';
+                $ticketLabel = $bugId > 0 ? ('#BUG-' . sprintf('%06d', $bugId)) : '-';
                 if ($bugId > 0) {
                     try {
-                        $ticketLabel = $tickets->fromBugId($bugId);
+                        $ticketLabel = '#' . $tickets->fromBugId($bugId);
                     } catch (\Throwable) {
-                        $ticketLabel = '#'.$bugId;
+                        $ticketLabel = '#BUG-' . sprintf('%06d', $bugId);
                     }
                 }
 

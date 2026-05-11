@@ -22,12 +22,23 @@
                 </p>
             </div>
 
+            @php
+                $displayStatus = $bug->status;
+                // If internally 'In Progress' but previously reached 'Testing', show as 'Testing' to client
+                if ($bug->status === 'In Progress') {
+                    $hasReachedTesting = $bug->statusHistories->where('new_status', 'Testing')->isNotEmpty();
+                    if ($hasReachedTesting) {
+                        $displayStatus = 'Testing';
+                    }
+                }
+            @endphp
+
             <x-status-badge
-                :status="$bug->status"
+                :status="$displayStatus"
                 class="self-start tracking-status-chip"
-                data-tracking-status-value="{{ $bug->status }}"
+                data-tracking-status-value="{{ $displayStatus }}"
             >
-                {{ $bug->status }}
+                {{ $displayStatus }}
             </x-status-badge>
         </div>
 

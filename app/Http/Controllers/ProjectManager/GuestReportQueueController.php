@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GuestBugReport;
 use App\Models\GuestRateLimit;
 use App\Jobs\ProcessGuestBugReportJob;
+use App\Services\TicketService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -44,7 +45,7 @@ class GuestReportQueueController extends Controller
     /**
      * Approve a guest bug report
      */
-    public function approve(Request $request, GuestBugReport $guestReport): RedirectResponse
+    public function approve(Request $request, GuestBugReport $guestReport, TicketService $tickets): RedirectResponse
     {
         if ($guestReport->queue_status !== 'pending') {
             return back()->with('error', 'Laporan sudah diproses sebelumnya.');
@@ -66,7 +67,7 @@ class GuestReportQueueController extends Controller
         // Move attachments if any
         $this->moveAttachments($guestReport, $bug);
 
-        return back()->with('success', 'Laporan bug telah disetujui dan dibuat menjadi bug #' . $bug->id);
+        return back()->with('success', 'Laporan bug telah disetujui dan dibuat menjadi bug #' . $tickets->fromBugId($bug->id));
     }
 
     /**

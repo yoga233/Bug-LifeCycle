@@ -599,7 +599,7 @@
                     $actual = (int) round((float) $actual);
 
                     return [
-                        'ticket'         => (string) ($item->bug->ticket ?? ('#' . $item->bug_id)),
+                        'ticket'         => '#' . ($item->bug->ticket ?? sprintf('BUG-%06d', $item->bug_id)),
                         'title'          => (string) ($item->bug?->title ?? ''),
                         'date_label'     => $item->changed_at->timezone($timezone)->locale('id')->translatedFormat('d M'),
                         'date_sort'      => $item->changed_at->timezone($timezone)->format('Y-m-d H:i:s'),
@@ -1423,7 +1423,7 @@
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                                        {{ $h->bug->ticket ?? ('#' . $h->bug_id) }}
+                                        #{{ $h->bug->ticket ?? sprintf('BUG-%06d', $h->bug_id) }}
                                     </span>
 
                                     @if ($h->bug?->project?->name)

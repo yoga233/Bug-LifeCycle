@@ -148,7 +148,7 @@
                         name="q"
                         type="text"
                         value="{{ $filters['q'] ?? '' }}"
-                        placeholder="Judul atau #BUG-000123"
+                        placeholder="Judul atau #BUG-3FTNOD"
                         class="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-800 placeholder:text-slate-400 transition-all duration-150 focus:border-[rgba(138,11,78,0.35)] focus:outline-none focus:ring-2 focus:ring-[rgba(138,11,78,0.10)]"
                     />
                 </div>
@@ -291,7 +291,7 @@
                             : $createdAt->translatedFormat('d M Y'))
                         : '—';
 
-                    $ticket = $bug->ticket ?? sprintf('#BUG-%06d', $bug->id);
+                    $ticket = '#' . ($bug->ticket ?? sprintf('BUG-%06d', $bug->id));
                 @endphp
 
                 <a

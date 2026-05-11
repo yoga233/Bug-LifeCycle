@@ -5,6 +5,7 @@ namespace App\Http\Controllers\ProjectManager;
 use App\Http\Controllers\Controller;
 use App\Models\Bug;
 use App\Models\User;
+use App\Services\TicketService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,7 @@ class OverviewController extends Controller
      */
     private const CACHE_PREFIX = 'pm:dashboard:';
 
-    public function index(): View
+    public function index(TicketService $tickets): View
     {
         $stats = Cache::remember(
             self::CACHE_PREFIX . 'stats',
@@ -52,6 +53,11 @@ class OverviewController extends Controller
                 ->where('status', 'Reported')
                 ->latest() // <-- Tetap terbaru di atas
                 ->get();   // <-- Hapus limit(10) di atas baris ini
+
+            $newBugs->transform(function (Bug $bug) use ($tickets) {
+                $bug->setAttribute('ticket', $tickets->fromBugId($bug->id));
+                return $bug;
+            });
 
         $programmers = Cache::remember(
             self::CACHE_PREFIX . 'programmers',

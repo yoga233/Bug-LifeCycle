@@ -223,6 +223,7 @@ window.pmAssignmentSection = function pmAssignmentSection({
 
             // update state
             this.bug.status = bug.status;
+            if (bug.ticket) this.bug.ticket = bug.ticket;
 
             if (bug.assignee?.name) {
                 this.assigneeName = bug.assignee.name;
@@ -246,6 +247,11 @@ window.pmAssignmentSection = function pmAssignmentSection({
             }
 
             this.syncUiPermissions();
+
+            // Dynamic timeline update
+            if (Array.isArray(data?.timeline)) {
+                window.dispatchEvent(new CustomEvent('bug-timeline-updated', { detail: data.timeline }));
+            }
         },
 
         async submitPriority() {
@@ -453,6 +459,145 @@ window.pmAssignmentSection = function pmAssignmentSection({
                 window.dispatchEvent(new CustomEvent('pm-unassign-finished', { detail: { ok } }));
             }
         },
+    };
+};
+
+// Generic Bug Timeline (for PM, QA, Programmer)
+window.bugTimelineSection = function bugTimelineSection({ initialEvents }) {
+    return {
+        events: Array.isArray(initialEvents) ? initialEvents : [],
+
+        init() {
+            // Re-render when status changed by other components
+            window.addEventListener('bug-timeline-updated', (e) => {
+                if (Array.isArray(e.detail)) {
+                    this.events = e.detail;
+                }
+            });
+        },
+
+        timelineLabel(status) {
+            const map = {
+                'reported': 'Dilaporkan',
+                'assigned': 'Ditugaskan',
+                'in_progress': 'Dalam Pengerjaan',
+                'testing': 'Pengujian',
+                'resolved': 'Diselesaikan',
+                'closed': 'Ditutup',
+                'rejected': 'Dikembalikan QA',
+            };
+            const s = String(status || '').toLowerCase().replace(/ /g, '_');
+            return map[s] || status;
+        },
+
+        timelineDot(status, isRevision = false) {
+            if (isRevision) return 'bg-rose-500';
+            const map = {
+                'reported': 'bg-amber-500',
+                'assigned': 'bg-sky-500',
+                'in_progress': 'bg-blue-500',
+                'testing': 'bg-violet-500',
+                'resolved': 'bg-emerald-500',
+                'closed': 'bg-slate-500',
+                'rejected': 'bg-rose-500',
+            };
+            const s = String(status || '').toLowerCase().replace(/ /g, '_');
+            return map[s] || 'bg-slate-300';
+        },
+
+        timelineLine(status, isRevision = false) {
+            if (isRevision) return 'bg-rose-200';
+            const map = {
+                'reported': 'bg-amber-200',
+                'assigned': 'bg-sky-200',
+                'in_progress': 'bg-blue-200',
+                'testing': 'bg-violet-200',
+                'resolved': 'bg-emerald-200',
+                'closed': 'bg-slate-200',
+                'rejected': 'bg-rose-200',
+            };
+            const s = String(status || '').toLowerCase().replace(/ /g, '_');
+            return map[s] || 'bg-slate-200';
+        }
+    };
+};
+
+// QA/Programmer workflow section (Approve, Reject, Start, etc.)
+window.bugWorkflowSection = function bugWorkflowSection({ csrf, initialBugStatus, initialTicket }) {
+    return {
+        csrf,
+        status: initialBugStatus,
+        ticket: initialTicket || '',
+        submitting: false,
+
+        dispatchToast(type, message) {
+            window.dispatchEvent(
+                new CustomEvent('app-toast', {
+                    detail: { type: type || 'success', message: message || '' },
+                })
+            );
+        },
+
+        async postForm(url, formData) {
+            this.submitting = true;
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        ...(this.csrf ? { 'X-CSRF-TOKEN': this.csrf } : {}),
+                    },
+                    body: formData,
+                });
+
+                const data = await res.json().catch(() => null);
+
+                if (!res.ok) {
+                    const msg = data?.message || 'Gagal melakukan aksi.';
+                    this.dispatchToast('error', msg);
+                    return null;
+                }
+
+                if (data?.bug?.status) {
+                    this.status = data.bug.status;
+                }
+                
+                if (data?.bug?.ticket) {
+                    this.ticket = data.bug.ticket;
+                }
+
+                if (data?.bug) {
+                    // Global event so other components (badges, timeline) update
+                    window.dispatchEvent(new CustomEvent('bug-status-updated', { detail: data.bug }));
+                }
+
+                if (Array.isArray(data?.timeline)) {
+                    window.dispatchEvent(new CustomEvent('bug-timeline-updated', { detail: data.timeline }));
+                }
+
+                if (data?.message) {
+                    this.dispatchToast('success', data.message);
+                }
+
+                return data;
+            } catch (e) {
+                this.dispatchToast('error', 'Terjadi kesalahan sistem. Coba lagi.');
+                return null;
+            } finally {
+                this.submitting = false;
+            }
+        },
+
+        // Helper for simple JSON post (no files)
+        async postJson(url, payload) {
+            const formData = new FormData();
+            if (payload) {
+                Object.keys(payload).forEach(k => formData.append(k, payload[k]));
+            }
+            return this.postForm(url, formData);
+        }
     };
 };
 

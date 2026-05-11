@@ -17,7 +17,7 @@ class BugStatusService
      *
      * @throws InvalidArgumentException
      */
-    public function transition(Bug $bug, string $toStatus, ?User $actor = null): Bug
+    public function transition(Bug $bug, string $toStatus, ?User $actor = null, ?TicketService $tickets = null): Bug
     {
         $fromStatus = (string) $bug->status;
         $toStatus = $this->normalizeStatus($toStatus);
@@ -54,11 +54,12 @@ class BugStatusService
 
             // Notify assignee about status change (if any) - except for Testing status (handled separately)
             if ($bug->assignee_id && $toStatus !== 'Testing') {
+                $ticketLabel = $tickets ? $tickets->fromBugId($bug->id) : $bug->id;
                 Notification::create([
                     'user_id' => $bug->assignee_id,
                     'related_id' => $bug->id,
                     'type' => 'BugStatusChanged',
-                    'message' => "Bug #{$bug->id} status: {$this->toStatusLabel($fromStatus)} → {$this->toStatusLabel($toStatus)}",
+                    'message' => "Bug #{$ticketLabel} status: {$this->toStatusLabel($fromStatus)} → {$this->toStatusLabel($toStatus)}",
                     'is_read' => false,
                     'created_at' => now(),
                 ]);
@@ -72,11 +73,12 @@ class BugStatusService
                     ->pluck('id');
 
                 foreach ($pmIds as $pmId) {
+                    $ticketLabel = $tickets ? $tickets->fromBugId($bug->id) : $bug->id;
                     Notification::create([
                         'user_id' => $pmId,
                         'related_id' => $bug->id,
                         'type' => 'BugDone',
-                        'message' => 'Bug #'.$bug->id.' selesai ('.$this->toStatusLabel($toStatus).'): '.$bug->title,
+                        'message' => 'Bug #'.$ticketLabel.' selesai ('.$this->toStatusLabel($toStatus).'): '.$bug->title,
                         'is_read' => false,
                         'created_at' => now(),
                     ]);
@@ -87,11 +89,12 @@ class BugStatusService
             if ($toStatus === 'Testing') {
                 // First notify the assignee (programmer) that bug is sent to testing
                 if ($bug->assignee_id) {
+                    $ticketLabel = $tickets ? $tickets->fromBugId($bug->id) : $bug->id;
                     Notification::create([
                         'user_id' => $bug->assignee_id,
                         'related_id' => $bug->id,
                         'type' => 'BugStatusChanged',
-                        'message' => "Bug #{$bug->id} status: {$this->toStatusLabel($fromStatus)} → {$this->toStatusLabel($toStatus)}",
+                        'message' => "Bug #{$ticketLabel} status: {$this->toStatusLabel($fromStatus)} → {$this->toStatusLabel($toStatus)}",
                         'is_read' => false,
                         'created_at' => now(),
                     ]);
@@ -99,12 +102,13 @@ class BugStatusService
 
                 // Then notify all QA users using bulk insert for efficiency
                 $qaNotifications = [];
+                $ticketLabel = $tickets ? $tickets->fromBugId($bug->id) : $bug->id;
                 foreach ($qaIds ?? [] as $qaId) {
                     $qaNotifications[] = [
                         'user_id' => $qaId,
                         'related_id' => $bug->id,
                         'type' => 'BugStatusChanged',
-                        'message' => 'Bug #'.$bug->id.' siap untuk pengujian: '.$bug->title,
+                        'message' => 'Bug #'.$ticketLabel.' siap untuk pengujian: '.$bug->title,
                         'is_read' => false,
                         'created_at' => now(),
                     ];

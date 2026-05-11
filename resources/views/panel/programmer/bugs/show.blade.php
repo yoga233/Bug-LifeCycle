@@ -85,7 +85,7 @@
             }
         }
 
-        $ticketLabel = $bug->ticket ?? sprintf('BUG-%06d', $bug->id);
+        $ticketLabel = $ticket ?? $bug->ticket ?? sprintf('BUG-%06d', $bug->id);
 
         /*
         |--------------------------------------------------------------------------
@@ -139,6 +139,7 @@
             $events->push([
                 'status' => $h->new_status,
                 'at'     => $h->changed_at,
+                'is_revision' => ($h->old_status === 'Testing' && $h->new_status === 'In Progress'),
             ]);
         }
 
@@ -149,7 +150,7 @@
             ]);
         }
 
-        $events = $events->unique('status')->values();
+        $events = $events->values();
     @endphp
 
     {{-- ============================================================
@@ -207,7 +208,13 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <x-pm.status-badge :status="$bug->status" variant="pill" :dot="true" />
+                <span
+                    class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold"
+                    x-bind:class="statusBadgeUi(status).bg + ' ' + statusBadgeUi(status).text"
+                >
+                    <span class="h-1.5 w-1.5 rounded-full" x-bind:class="statusBadgeUi(status).dot"></span>
+                    <span x-text="statusLabelUi(status)"></span>
+                </span>
 
                 @if ($bug->priority)
                     <x-priority-badge :priority="$bug->priority" class="px-2.5 py-1 text-[11px]" />
@@ -223,8 +230,42 @@
     {{-- ============================================================
          Content Grid
          ============================================================ --}}
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div 
+        class="grid grid-cols-1 gap-6 lg:grid-cols-3"
+        x-data="{
+            ...bugWorkflowSection({ 
+                csrf: '{{ csrf_token() }}', 
+                initialBugStatus: '{{ $bug->status }}',
+                initialTicket: '{{ $ticketLabel }}'
+            }),
+            
+            statusLabelUi(status) {
+                const map = {
+                    'Reported':    'Dilaporkan',
+                    'Assigned':    'Ditugaskan',
+                    'In Progress': 'Dalam Pengerjaan',
+                    'Testing':     'Pengujian',
+                    'Resolved':    'Diselesaikan',
+                    'Closed':      'Ditutup',
+                    'Rejected':    'Dikembalikan QA',
+                };
+                return map[status] || status || '-';
+            },
 
+            statusBadgeUi(status) {
+                const map = {
+                    'Reported':    { bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-500' },
+                    'Assigned':    { bg: 'bg-sky-50',     text: 'text-sky-700',     dot: 'bg-sky-500' },
+                    'In Progress': { bg: 'bg-blue-50',    text: 'text-blue-700',    dot: 'bg-blue-500' },
+                    'Testing':     { bg: 'bg-violet-50',  text: 'text-violet-700',  dot: 'bg-violet-500' },
+                    'Resolved':    { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+                    'Closed':      { bg: 'bg-slate-100',  text: 'text-slate-700',   dot: 'bg-slate-500' },
+                    'Rejected':    { bg: 'bg-rose-50',    text: 'text-rose-700',    dot: 'bg-rose-500' },
+                };
+                return map[status] || { bg: 'bg-slate-100', text: 'text-slate-700', dot: 'bg-slate-500' };
+            },
+        }"
+    >
         {{-- Main --}}
         <div class="space-y-6 lg:col-span-2">
 
@@ -487,45 +528,56 @@
                 </div>
 
                 <div class="px-6 py-5">
-                    @if ($bug->status === 'Assigned')
-                        <form method="POST" action="{{ route('programmer.bugs.start', $bug) }}">
-                            @csrf
+                    <div x-show="status === 'Assigned'">
+                        <form @submit.prevent="postJson('{{ route('programmer.bugs.start', $bug) }}')">
                             <button
                                 type="submit"
-                                class="inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#8a0b4e] text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#6d0940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
+                                :disabled="submitting"
+                                class="inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#8a0b4e] text-xs font-semibold text-white transition-all duration-150 hover:bg-[#6d0940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Mulai Pengerjaan
+                                <span x-show="!submitting">Mulai Pengerjaan</span>
+                                <span x-show="submitting" x-cloak>Memproses...</span>
                             </button>
                         </form>
-                    @elseif ($bug->status === 'In Progress')
-                        <form method="POST" action="{{ route('programmer.bugs.sendToTesting', $bug) }}">
-                            @csrf
+                    </div>
+
+                    <div x-show="status === 'In Progress'">
+                        <form @submit.prevent="postJson('{{ route('programmer.bugs.sendToTesting', $bug) }}')">
                             <button
                                 type="submit"
-                                class="inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#8a0b4e] text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#6d0940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
+                                :disabled="submitting"
+                                class="inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#8a0b4e] text-xs font-semibold text-white transition-all duration-150 hover:bg-[#6d0940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Kirim ke Pengujian
+                                <span x-show="!submitting">Kirim ke Pengujian</span>
+                                <span x-show="submitting" x-cloak>Memproses...</span>
                             </button>
                         </form>
-                    @elseif ($bug->status === 'Rejected')
-                        <form method="POST" action="{{ route('programmer.bugs.start', $bug) }}">
-                            @csrf
+                    </div>
+
+                    <div x-show="status === 'Rejected'">
+                        <form @submit.prevent="postJson('{{ route('programmer.bugs.start', $bug) }}')">
                             <button
                                 type="submit"
-                                class="inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#8a0b4e] text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#6d0940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1"
+                                :disabled="submitting"
+                                class="inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#8a0b4e] text-xs font-semibold text-white transition-all duration-150 hover:bg-[#6d0940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Kerjakan Ulang
+                                <span x-show="!submitting">Kerjakan Ulang</span>
+                                <span x-show="submitting" x-cloak>Memproses...</span>
                             </button>
                         </form>
-                    @elseif ($bug->status === 'Testing')
+                    </div>
+
+                    <div x-show="status === 'Testing'">
                         <p class="text-sm text-slate-500">
                             Tiket sedang diverifikasi oleh QA. Tidak ada aksi yang diperlukan saat ini.
                         </p>
-                    @else
+                    </div>
+
+                    <div x-show="!['Assigned', 'In Progress', 'Rejected', 'Testing'].includes(status)">
                         <p class="text-sm text-slate-500">
                             Tidak ada aksi yang tersedia pada status ini.
                         </p>
-                    @endif
+                    </div>
                 </div>
             </section>
 
@@ -571,7 +623,16 @@
             </section>
 
             {{-- Timeline --}}
-            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <section
+                class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                x-data="bugTimelineSection({
+                    initialEvents: {{ collect($events)->map(fn($e) => [
+                        'status' => $e['status'],
+                        'at' => $e['at'] instanceof \DateTime ? $e['at']->format('d M Y, H:i') : $e['at'],
+                        'is_revision' => $e['is_revision'] ?? false,
+                    ])->toJson() }}
+                })"
+            >
                 <div class="border-b border-slate-100 px-6 py-5">
                     <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
                         Riwayat
@@ -580,26 +641,32 @@
                 </div>
 
                 <div class="px-6 py-5">
-                    @forelse ($events as $e)
-                        @php($statusKey = $timelineKey($e['status']))
+                    <template x-if="events.length === 0">
+                        <p class="text-sm text-slate-500">Belum ada riwayat perubahan status.</p>
+                    </template>
+
+                    <template x-for="(e, index) in events" :key="index">
                         <div class="flex gap-3">
                             <div class="flex flex-col items-center">
-                                <div class="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full {{ $timelineDot($statusKey) }}"></div>
-                                @unless ($loop->last)
-                                    <div class="mt-1 w-px flex-1 {{ $timelineLine($statusKey) }}" style="min-height:24px"></div>
-                                @endunless
+                                <div class="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full" :class="timelineDot(e.status, e.is_revision)"></div>
+                                <template x-if="index < events.length - 1">
+                                    <div class="mt-1 w-px flex-1" :class="timelineLine(e.status, e.is_revision)" style="min-height:24px"></div>
+                                </template>
                             </div>
 
-                            <div class="min-w-0 flex-1 {{ $loop->last ? 'pb-0' : 'pb-4' }}">
-                                <p class="text-sm font-medium text-slate-800">{{ $timelineLabel($statusKey) }}</p>
-                                <p class="mt-0.5 text-xs text-slate-400">
-                                    {{ $e['at']?->format('d M Y, H:i') ?? '—' }}
-                                </p>
+                            <div class="min-w-0 flex-1" :class="index === events.length - 1 ? 'pb-0' : 'pb-4'">
+                                <div class="flex items-center gap-2">
+                                    <p class="text-sm font-medium text-slate-800" x-text="timelineLabel(e.status)"></p>
+                                    <template x-if="e.is_revision">
+                                        <span class="inline-flex items-center rounded-full bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-rose-600 border border-rose-100">
+                                            Revisi
+                                        </span>
+                                    </template>
+                                </div>
+                                <p class="mt-0.5 text-xs text-slate-400" x-text="e.at"></p>
                             </div>
                         </div>
-                    @empty
-                        <p class="text-sm text-slate-500">Belum ada riwayat perubahan status.</p>
-                    @endforelse
+                    </template>
                 </div>
             </section>
         </div>

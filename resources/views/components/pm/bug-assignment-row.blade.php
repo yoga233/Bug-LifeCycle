@@ -4,7 +4,7 @@
     $hasPriority = (bool) $bug->priority_id;
     $reportedAt  = $bug->created_at?->locale('id')->diffForHumans();
     $reportedAt  = $reportedAt ? str_replace(' yang lalu', ' lalu', $reportedAt) : null;
-    $ticket      = $bug->ticket ?? sprintf('#BUG-%06d', $bug->id);
+    $ticket      = '#' . ($bug->ticket ?? sprintf('BUG-%06d', $bug->id));
 @endphp
 
 <div class="group px-5 py-5 transition-colors duration-150 hover:bg-[rgba(138,11,78,0.022)]">

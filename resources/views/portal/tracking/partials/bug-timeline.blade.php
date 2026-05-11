@@ -10,30 +10,20 @@
         </h2>
 
         <div class="tracking-timeline-list" role="list">
-            @forelse ($bug->statusHistories as $history)
+            @php
+                $displayed = [];
+                $filtered = $bug->statusHistories->filter(function($h) use (&$displayed) {
+                    if (in_array($h->new_status, $displayed)) return false;
+                    $displayed[] = $h->new_status;
+                    return true;
+                });
+            @endphp
+
+            @forelse ($filtered as $history)
                 @php
                     $oldStatus = (string) $history->old_status;
                     $newStatus = (string) $history->new_status;
-
-                    $statusRank = [
-                        'Reported'    => 1,
-                        'Assigned'    => 2,
-                        'In Progress' => 3,
-                        'Testing'     => 4,
-                        'Resolved'    => 5,
-                        'Closed'      => 6,
-                    ];
-
-                    $isRollback = isset($statusRank[$oldStatus], $statusRank[$newStatus])
-                        && $statusRank[$newStatus] < $statusRank[$oldStatus];
-
-                    $historyKind = match (true) {
-                        $oldStatus === $newStatus                                 => 'created',
-                        $oldStatus === 'Assigned' && $newStatus === 'Reported'   => 'assignment_canceled',
-                        $oldStatus === 'Testing'  && $newStatus === 'In Progress' => 'testing_revision',
-                        $isRollback                                               => 'rollback',
-                        default                                                   => 'updated',
-                    };
+                    $historyKind = ($oldStatus === $newStatus) ? 'created' : 'updated';
                 @endphp
 
                 <div
@@ -49,10 +39,6 @@
                     >
                         @if ($oldStatus === $newStatus)
                             Your report was received and is now in the queue.
-                        @elseif ($oldStatus === 'Assigned' && $newStatus === 'Reported')
-                            Your report is back in the review queue.
-                        @elseif ($oldStatus === 'Testing' && $newStatus === 'In Progress')
-                            The fix is being revised before final verification.
                         @else
                             Status was updated to
                             <span class="font-semibold text-[var(--p)]">

@@ -7,24 +7,41 @@ use App\Models\Bug;
 use App\Models\Comment;
 use App\Models\Notification;
 use App\Services\BugStatusService;
+use App\Services\TicketService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 
 class BugValidationController extends Controller
 {
-    public function approve(Bug $bug, BugStatusService $statusService, Request $request): RedirectResponse
+    public function approve(Bug $bug, BugStatusService $statusService, Request $request, TicketService $tickets): RedirectResponse|JsonResponse
     {
         try {
-            $statusService->transition($bug, 'Resolved', $request->user());
+            $statusService->transition($bug, 'Resolved', $request->user(), $tickets);
         } catch (InvalidArgumentException $e) {
+            if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
             return back()->with('error', $e->getMessage());
+        }
+
+        if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'message' => 'Bug berhasil ditandai sebagai "Diselesaikan".',
+                'bug' => [
+                    'id' => $bug->id,
+                    'ticket' => $tickets->fromBugId($bug->id),
+                    'status' => $bug->status,
+                ],
+                'timeline' => $this->getTimelineData($bug),
+            ], 200);
         }
 
         return back()->with('status', 'Bug berhasil ditandai sebagai "Diselesaikan".');
     }
 
-    public function reject(Bug $bug, BugStatusService $statusService, Request $request): RedirectResponse
+    public function reject(Bug $bug, BugStatusService $statusService, Request $request, TicketService $tickets): RedirectResponse|JsonResponse
     {
         $request->validate([
             'reason'        => ['nullable', 'string', 'max:1000'],
@@ -75,14 +92,18 @@ class BugValidationController extends Controller
 
         // ── Transisi status ───────────────────────────────────────────────
         try {
-            $statusService->transition($bug, 'In Progress', $request->user());
+            $statusService->transition($bug, 'In Progress', $request->user(), $tickets);
         } catch (InvalidArgumentException $e) {
+            if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
             return back()->with('error', $e->getMessage());
         }
 
         // ── Notifikasi ke assignee ────────────────────────────────────────
         if ($bug->assignee_id) {
-            $message = 'Bug #'.$bug->id.' dikembalikan oleh QA ke tahap Dalam Pengerjaan.';
+            $ticketId = $tickets->fromBugId($bug->id);
+            $message = 'Bug #'.$ticketId.' dikembalikan oleh QA ke tahap Dalam Pengerjaan.';
 
             if ($reason !== '') {
                 $message .= ' Catatan QA: '.str($reason)->limit(120);
@@ -107,6 +128,41 @@ class BugValidationController extends Controller
             $statusMsg .= " {$uploadedCount} gambar berhasil dilampirkan.";
         }
 
+        if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'message' => $statusMsg,
+                'bug' => [
+                    'id' => $bug->id,
+                    'ticket' => $tickets->fromBugId($bug->id),
+                    'status' => $bug->status,
+                ],
+                'timeline' => $this->getTimelineData($bug),
+            ], 200);
+        }
+
         return back()->with('status', $statusMsg);
+    }
+
+    private function getTimelineData(Bug $bug): array
+    {
+        $bug->load('statusHistories');
+        $histories = $bug->statusHistories->sortBy('changed_at')->values();
+        $events = collect();
+
+        $events->push([
+            'status' => $histories->first()?->old_status ?? $bug->status,
+            'at' => $bug->created_at?->timezone(config('app.timezone'))?->format('d M Y, H:i'),
+        ]);
+
+        foreach ($histories as $h) {
+            $events->push([
+                'status' => $h->new_status,
+                'old_status' => $h->old_status,
+                'at' => $h->changed_at?->timezone(config('app.timezone'))?->format('d M Y, H:i'),
+                'is_revision' => ($h->old_status === 'Testing' && $h->new_status === 'In Progress'),
+            ]);
+        }
+
+        return $events->values()->toArray();
     }
 }

@@ -92,7 +92,7 @@
             }
         }
 
-        $ticketLabel = $bug->ticket ?? sprintf('BUG-%06d', $bug->id);
+        $ticketLabel = $ticket ?? $bug->ticket ?? sprintf('BUG-%06d', $bug->id);
 
         /*
         |--------------------------------------------------------------------------
@@ -142,12 +142,16 @@
             'at'     => $bug->created_at,
         ]);
         foreach ($histories as $h) {
-            $events->push(['status' => $h->new_status, 'at' => $h->changed_at]);
+            $events->push([
+                'status' => $h->new_status,
+                'at' => $h->changed_at,
+                'is_revision' => ($h->old_status === 'Testing' && $h->new_status === 'In Progress'),
+            ]);
         }
         if (($events->last()['status'] ?? null) !== $bug->status) {
             $events->push(['status' => $bug->status, 'at' => $bug->updated_at]);
         }
-        $events = $events->unique('status')->values();
+        $events = $events->values();
     @endphp
 
     <div
@@ -865,7 +869,16 @@
                 </section>
 
                 {{-- Timeline --}}
-                <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <section
+                    class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                    x-data="bugTimelineSection({
+                        initialEvents: {{ collect($events)->map(fn($e) => [
+                            'status' => $e['status'],
+                            'at' => $e['at'] instanceof \DateTime ? $e['at']->format('d M Y, H:i') : $e['at'],
+                            'is_revision' => $e['is_revision'] ?? false,
+                        ])->toJson() }}
+                    })"
+                >
                     <div class="border-b border-slate-100 px-6 py-5">
                         <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-[#8a0b4e]/60">
                             Riwayat
@@ -874,26 +887,32 @@
                     </div>
 
                     <div class="px-6 py-5">
-                        @forelse ($events as $e)
-                            @php($statusKey = $timelineKey($e['status']))
+                        <template x-if="events.length === 0">
+                            <p class="text-sm text-slate-500">Belum ada riwayat perubahan status.</p>
+                        </template>
+
+                        <template x-for="(e, index) in events" :key="index">
                             <div class="flex gap-3">
                                 <div class="flex flex-col items-center">
-                                    <div class="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full {{ $timelineDot($statusKey) }}"></div>
-                                    @unless ($loop->last)
-                                        <div class="mt-1 w-px flex-1 {{ $timelineLine($statusKey) }}" style="min-height:24px"></div>
-                                    @endunless
+                                    <div class="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full" :class="timelineDot(e.status, e.is_revision)"></div>
+                                    <template x-if="index < events.length - 1">
+                                        <div class="mt-1 w-px flex-1" :class="timelineLine(e.status, e.is_revision)" style="min-height:24px"></div>
+                                    </template>
                                 </div>
 
-                                <div class="min-w-0 flex-1 {{ $loop->last ? 'pb-0' : 'pb-4' }}">
-                                    <p class="text-sm font-medium text-slate-800">{{ $timelineLabel($statusKey) }}</p>
-                                    <p class="mt-0.5 text-xs text-slate-400">
-                                        {{ $e['at']?->format('d M Y, H:i') ?? '—' }}
-                                    </p>
+                                <div class="min-w-0 flex-1" :class="index === events.length - 1 ? 'pb-0' : 'pb-4'">
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-sm font-medium text-slate-800" x-text="timelineLabel(e.status)"></p>
+                                        <template x-if="e.is_revision">
+                                            <span class="inline-flex items-center rounded-full bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-rose-600 border border-rose-100">
+                                                Revisi
+                                            </span>
+                                        </template>
+                                    </div>
+                                    <p class="mt-0.5 text-xs text-slate-400" x-text="e.at"></p>
                                 </div>
                             </div>
-                        @empty
-                            <p class="text-sm text-slate-500">Belum ada riwayat perubahan status.</p>
-                        @endforelse
+                        </template>
                     </div>
                 </section>
             </div>
