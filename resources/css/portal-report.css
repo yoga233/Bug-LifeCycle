@@ -495,8 +495,8 @@
     }
 
     .report-upload-dropzone:hover{
-    border-color:var(--p);
-    background:rgba(var(--primary-rgb),.02);
+    border-color: #8a0b4e;
+    background: rgba(138, 11, 78, 0.02);
     }
 
     .report-upload-dropzone:focus-visible{

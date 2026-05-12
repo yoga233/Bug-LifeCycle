@@ -34,8 +34,9 @@ Route::get('/', function () {
         return redirect()->route('dashboard');
     }
 
-    return redirect()->route('login');
+    return view('portal.landing.index');
 })->name('home');
+
 
 // Public client portal (tanpa login) - menggunakan guest layout untuk performa optimal
 // Catatan: kita TIDAK menghapus middleware session karena komponen topbar/blade

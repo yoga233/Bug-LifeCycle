@@ -516,14 +516,15 @@
                                     ])->values()->toJson() }},
                                 }),
                                 showEmptyAlert: false,
+                                isWritingFirstComment: false,
                             }"
                             class="space-y-4"
                         >
-                            <template x-if="comments.length === 0">
+                            <template x-if="comments.length === 0 && !isWritingFirstComment">
                                 <div class="py-6 text-center">
                                     <p class="text-sm text-slate-400">
                                         Belum ada komentar.
-                                        <a href="#comment-form" class="font-medium text-slate-600 underline-offset-2 transition-colors hover:text-[#8a0b4e] hover:underline">
+                                        <a href="#comment-form" @click.prevent="isWritingFirstComment = true; $nextTick(() => $refs.commentTextarea.focus())" class="font-medium text-slate-600 underline-offset-2 transition-colors hover:text-[#8a0b4e] hover:underline">
                                             Tulis komentar pertama.
                                         </a>
                                     </p>
@@ -553,7 +554,7 @@
                                 </div>
                             </template>
 
-                            <div class="border-t border-slate-100 pt-5">
+                            <div class="border-t border-slate-100 pt-5" x-show="comments.length > 0 || isWritingFirstComment">
                                 <form
                                     id="comment-form"
                                     method="POST"
@@ -574,8 +575,10 @@
                                         class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-300 transition-colors duration-150 focus:border-[rgba(138,11,78,0.35)] focus:outline-none focus:ring-2 focus:ring-[rgba(138,11,78,0.10)]"
                                         placeholder="Tulis konteks, keputusan, atau update untuk tim…"
                                         x-model="content"
+                                        x-ref="commentTextarea"
                                         :disabled="submitting"
                                         x-on:input="if (content.trim()) showEmptyAlert = false"
+                                        @blur="if (!content.trim()) isWritingFirstComment = false"
                                     ></textarea>
 
                                     <p class="text-xs text-rose-500" x-show="showEmptyAlert" x-transition.opacity x-cloak>

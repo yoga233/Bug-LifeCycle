@@ -47,6 +47,7 @@
         <nav class="foot-links" aria-label="Portal actions">
           <a href="{{ route('client.report') }}" data-i18n="foot_report">Laporkan Bug</a>
           <a href="{{ route('client.tracking') }}" data-i18n="foot_track">Lacak Tiket</a>
+          <a href="{{ route('login') }}" data-i18n="foot_signin">Login Internal</a>
         </nav>
       </div>
 

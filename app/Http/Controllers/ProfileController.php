@@ -19,12 +19,16 @@ class ProfileController extends Controller
         $user = $request->user();
 
         // Align profile UI with each internal role layout.
-        // For PM we want the profile page to look like other PM pages
-        // (topbar PM, gradient background, container, card style).
-        if ($user && method_exists($user, 'hasRole') && $user->hasRole('Project Manager')) {
-            return view('profile.edit-pm', [
-                'user' => $user,
-            ]);
+        if ($user && method_exists($user, 'hasRole')) {
+            if ($user->hasRole('Project Manager')) {
+                return view('profile.edit-pm', ['user' => $user]);
+            }
+            if ($user->hasRole('QA')) {
+                return view('profile.edit-qa', ['user' => $user]);
+            }
+            if ($user->hasRole('Programmer')) {
+                return view('profile.edit-programmer', ['user' => $user]);
+            }
         }
 
         return view('profile.edit', [

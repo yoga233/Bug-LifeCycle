@@ -78,6 +78,12 @@
     .flatpickr-prev-month:hover,.flatpickr-next-month:hover { color:#8a0b4e !important; }
     .flatpickr-current-month .flatpickr-monthDropdown-months:focus,
     .flatpickr-current-month input.cur-year:focus { outline-color:#8a0b4e !important; }
+
+    /* Override global input filled style for this filter form only */
+    #programmer-kinerja-filter-form input:not(:placeholder-shown) {
+        background-color: #ffffff !important;
+        border-color: #e2e8f0 !important;
+    }
 </style>
 
 <div>

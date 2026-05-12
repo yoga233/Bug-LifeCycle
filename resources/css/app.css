@@ -36,7 +36,21 @@
     [role='alert'] {
         @apply font-ui text-sm leading-6;
     }
+
+    /* Hide native browser password reveal and clear buttons */
+    input::-ms-reveal,
+    input::-ms-clear {
+        display: none;
+    }
+
+    /* Soft brand background when input is filled */
+    input:not(:placeholder-shown) {
+        background-color: #fdf2f8; /* Soft brand tint (rose-50 equivalent) */
+        border-color: rgba(138, 11, 78, 0.2);
+    }
 }
+
+
 
 @layer components {
     .ui-text-display {

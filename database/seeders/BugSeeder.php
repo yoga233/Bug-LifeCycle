@@ -47,30 +47,46 @@ class BugSeeder extends Seeder
             return;
         }
 
+        // 50-60 bugs per programmer. Let's aim for 55 average.
+        $totalProgrammers = count($programmerIds);
+        $totalResolved = $totalProgrammers * 55;
+
         $statusPlan = array_merge(
-            array_fill(0, 4, 'Reported'),
-            array_fill(0, 7, 'Assigned'),
-            array_fill(0, 4, 'In Progress'),
-            array_fill(0, 3, 'Testing'),
-            array_fill(0, 2, 'Rejected'),
-            array_fill(0, 130, 'Resolved'),
+            array_fill(0, 5, 'Reported'),
+            array_fill(0, 10, 'Assigned'),
+            array_fill(0, 10, 'In Progress'),
+            array_fill(0, 5, 'Testing'),
+            array_fill(0, 5, 'Rejected'),
+            array_fill(0, $totalResolved, 'Resolved'),
         );
 
         shuffle($statusPlan);
 
-        // Tambah 5 bug dummy tanpa prioritas (priority_id null)
-        for ($i = 0; $i < 5; $i++) {
-            $status = $i < 3 ? 'Reported' : 'Assigned';
-            $this->seedBug($status, $projectIds, $severityIds, $priorities, $programmerIds, true);
+        // Tracker untuk jumlah "No SLA" per programmer (1-10 per programmer)
+        $noSlaLimits = [];
+        $noSlaCounts = [];
+        foreach ($programmerIds as $id) {
+            $noSlaLimits[$id] = fake()->numberBetween(1, 10);
+            $noSlaCounts[$id] = 0;
         }
 
         foreach ($statusPlan as $status) {
-            $this->seedBug($status, $projectIds, $severityIds, $priorities, $programmerIds);
+            $dummyNumber = $this->dummyCounter;
+            $assigneeId = $status === 'Reported' ? null : $programmerIds[($dummyNumber - 1) % $totalProgrammers];
+            
+            $hasSla = true;
+            if ($status === 'Resolved' && $assigneeId) {
+                if ($noSlaCounts[$assigneeId] < $noSlaLimits[$assigneeId]) {
+                    $hasSla = false;
+                    $noSlaCounts[$assigneeId]++;
+                }
+            }
+
+            $this->seedBug($status, $projectIds, $severityIds, $priorities, $programmerIds, $hasSla);
         }
     }
 
-    // Tambah parameter $noPriority
-    private function seedBug(string $status, array $projectIds, array $severityIds, Collection $priorities, array $programmerIds, bool $noPriority = false): void
+    private function seedBug(string $status, array $projectIds, array $severityIds, Collection $priorities, array $programmerIds, bool $hasSla = true): void
     {
         $dummyNumber = $this->nextDummyNumber();
         $priority = $priorities->random();
@@ -78,12 +94,11 @@ class BugSeeder extends Seeder
         $profile = $this->reporterProfile($dummyNumber);
         $scenario = $this->bugScenario($dummyNumber);
 
-        [$createdAt, $transitionTimes, $finalUpdatedAt] = $this->timelineForStatus($status, $priority);
+        [$createdAt, $transitionTimes, $finalUpdatedAt, $actualMinutes] = $this->timelineForStatus($status, $priority);
 
         $title = $scenario['title'];
         $description = $this->description($scenario, $profile, $status === 'Resolved');
 
-        // If reporter is not from Indonesia use English text when available
         if (strtolower($profile['country']) !== 'indonesia') {
             if (! empty($scenario['title_en'])) {
                 $title = $scenario['title_en'];
@@ -91,10 +106,17 @@ class BugSeeder extends Seeder
             $description = $this->description($scenario, $profile, $status === 'Resolved', 'en');
         }
 
+        $slaHours = (int) ($priority->sla_hours ?? 0);
+        $remainingSla = null;
+        
+        if ($status === 'Resolved' && $hasSla && $slaHours > 0 && $actualMinutes !== null) {
+            $remainingSla = ($slaHours * 60) - $actualMinutes;
+        }
+
         $bug = Bug::create([
             'project_id' => $projectIds[($dummyNumber - 1) % count($projectIds)],
             'severity_id' => Arr::random($severityIds),
-            'priority_id' => $noPriority ? null : (int) $priority->id,
+            'priority_id' => $hasSla ? (int) $priority->id : null,
             'assignee_id' => $assigneeId,
             'guest_name' => $profile['name'],
             'guest_email' => 'dummy.reporter.'.str_pad((string) $dummyNumber, 3, '0', STR_PAD_LEFT).'@buglife.local',
@@ -103,6 +125,7 @@ class BugSeeder extends Seeder
             'description' => $description,
             'frequency' => $scenario['frequency'],
             'status' => $status,
+            'remaining_sla_minutes' => $remainingSla,
             'created_at' => $createdAt,
             'updated_at' => $finalUpdatedAt,
         ]);
@@ -112,82 +135,69 @@ class BugSeeder extends Seeder
 
     private function timelineForStatus(string $status, Priority $priority): array
     {
-        $now = Carbon::create(2026, 5, 3, fake()->numberBetween(8, 20), fake()->numberBetween(0, 59), 0);
+        // Rentang 1 Januari 2026 - 10 Mei 2026
+        $now = Carbon::create(2026, 5, 10, 18, 0, 0);
         $start = Carbon::create(2026, 1, 1, 8, 0, 0);
         $slaHours = max(1, (int) ($priority->sla_hours ?? 24));
         $transitionTimes = [];
+        $actualMinutes = null;
 
-        // Status yang belum selesai: Reported, Assigned, In Progress, Testing
-        $unfinished = in_array($status, ['Reported', 'Assigned', 'In Progress', 'Testing']);
-        if ($unfinished) {
-            // Buat rentang 1-14 hari terakhir
-            $createdAt = $now->copy()->subDays(fake()->numberBetween(0, 13))->setTime(fake()->numberBetween(8, 20), fake()->numberBetween(0, 59), 0);
-        } else {
-            // Selesai: random antara 1 Jan - 3 Mei 2026
-            $createdAt = $start->copy()->addDays(fake()->numberBetween(0, $now->diffInDays($start)))->setTime(fake()->numberBetween(8, 20), fake()->numberBetween(0, 59), 0);
-        }
-
+        $createdAt = $start->copy()->addMinutes(fake()->numberBetween(0, (int) $start->diffInMinutes($now)));
+        
         if ($status === 'Reported') {
-            $final = $unfinished ? $createdAt->copy()->addMinutes(fake()->numberBetween(5, 90)) : $createdAt->copy()->addMinutes(fake()->numberBetween(5, 90));
-            if ($final->gt($now)) {
-                $final = $now->copy()->subMinutes(fake()->numberBetween(1, 60));
-            }
-            return [$createdAt, $transitionTimes, $final];
+            $final = $createdAt->copy()->addMinutes(fake()->numberBetween(5, 90));
+            if ($final->gt($now)) $final = $now->copy()->subMinutes(1);
+            return [$createdAt, $transitionTimes, $final, null];
         }
 
         $assignedAt = $createdAt->copy()->addMinutes(fake()->numberBetween(20, 360));
-        if ($assignedAt->gt($now)) {
-            $assignedAt = $now->copy()->subMinutes(fake()->numberBetween(1, 120));
-        }
+        if ($assignedAt->gt($now)) $assignedAt = $now->copy()->subMinutes(2);
         $transitionTimes['Assigned'] = $assignedAt;
 
         if ($status === 'Assigned') {
-            return [$createdAt, $transitionTimes, $assignedAt];
+            return [$createdAt, $transitionTimes, $assignedAt, null];
         }
 
         $inProgressAt = $assignedAt->copy()->addMinutes(fake()->numberBetween(45, 540));
-        if ($inProgressAt->gt($now)) {
-            $inProgressAt = $now->copy()->subMinutes(fake()->numberBetween(1, 180));
-        }
+        if ($inProgressAt->gt($now)) $inProgressAt = $now->copy()->subMinutes(3);
         $transitionTimes['In Progress'] = $inProgressAt;
 
         if ($status === 'In Progress' || $status === 'Rejected') {
             $updatedAt = $inProgressAt->copy()->addHours(fake()->numberBetween(1, min(18, max(1, $slaHours))));
-            if ($updatedAt->gt($now)) {
-                $updatedAt = $now->copy()->subMinutes(fake()->numberBetween(1, 120));
-            }
+            if ($updatedAt->gt($now)) $updatedAt = $now->copy()->subMinutes(4);
             if ($status === 'Rejected') {
                 $transitionTimes['Rejected'] = $updatedAt;
             }
-            return [$createdAt, $transitionTimes, $updatedAt];
+            return [$createdAt, $transitionTimes, $updatedAt, null];
         }
 
         $testingAt = $inProgressAt->copy()->addHours(fake()->numberBetween(1, max(2, min(24, $slaHours))));
-        if ($testingAt->gt($now)) {
-            $testingAt = $now->copy()->subMinutes(fake()->numberBetween(5, 180));
-        }
+        if ($testingAt->gt($now)) $testingAt = $now->copy()->subMinutes(5);
         $transitionTimes['Testing'] = $testingAt;
 
         if ($status === 'Testing') {
-            return [$createdAt, $transitionTimes, $testingAt];
+            return [$createdAt, $transitionTimes, $testingAt, null];
         }
 
-        $isOnTime = fake()->numberBetween(1, 100) <= 72;
+        // Untuk Resolved
+        $isOnTime = fake()->numberBetween(1, 100) <= 75;
         $actualMinutes = $isOnTime
-            ? fake()->numberBetween(max(60, (int) ($slaHours * 18)), max(90, (int) ($slaHours * 58)))
-            : fake()->numberBetween(($slaHours * 60) + 30, ($slaHours * 60) + fake()->numberBetween(180, 960));
+            ? fake()->numberBetween(max(60, (int) ($slaHours * 10)), (int) ($slaHours * 58))
+            : fake()->numberBetween(($slaHours * 60) + 30, ($slaHours * 60) + 1440);
 
         $resolvedAt = $createdAt->copy()->addMinutes($actualMinutes);
         if ($resolvedAt->gt($now)) {
-            $resolvedAt = $now->copy()->subMinutes(fake()->numberBetween(1, 120));
+            $resolvedAt = $now->copy()->subMinutes(fake()->numberBetween(1, 60));
+            $actualMinutes = (int) $createdAt->diffInMinutes($resolvedAt);
         }
+        
         if ($testingAt->gte($resolvedAt)) {
-            $testingAt = $resolvedAt->copy()->subMinutes(fake()->numberBetween(15, 90));
+            $testingAt = $resolvedAt->copy()->subMinutes(fake()->numberBetween(10, 60));
             $transitionTimes['Testing'] = $testingAt;
         }
         $transitionTimes['Resolved'] = $resolvedAt;
 
-        return [$createdAt, $transitionTimes, $resolvedAt];
+        return [$createdAt, $transitionTimes, $resolvedAt, $actualMinutes];
     }
 
     private function seedHistory(Bug $bug, ?int $assigneeId, Carbon $createdAt, array $transitionTimes): void
@@ -212,6 +222,7 @@ class BugSeeder extends Seeder
             ]);
         }
     }
+
 
     private function reporterProfile(int $number): array
     {

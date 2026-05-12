@@ -1,151 +1,168 @@
 <x-guest-layout :card="false">
-    <div class="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-xl shadow-[#8a0b4e]/20">
-        <div class="grid grid-cols-1 items-stretch md:grid-cols-2">
-            {{-- Panel Publik (tanpa login) --}}
-            <section class="relative flex h-full w-full flex-col overflow-hidden bg-[#8a0b4e] px-8 py-10 text-white md:px-10 md:py-12">
-                {{-- Decorative Background Elements --}}
-                <div class="pointer-events-none absolute inset-0" aria-hidden="true">
-                    {{-- Dot grid texture --}}
-                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.4)_1px,transparent_0)] opacity-[0.12] [background-size:20px_20px]"></div>
+    <div class="fixed inset-0 z-0 bg-[#fafafa]"></div>
 
-                    {{-- Subtle highlights --}}
-                    <div class="absolute right-0 top-0 h-96 w-96 rounded-full bg-white/10 blur-3xl"></div>
-                    <div class="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-[#d48ab0]/20 blur-3xl"></div>
+    {{-- lebih pendek biar masuk 1 layar --}}
+    <div class="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-6 gap-6">
+        <div class="w-full max-w-[440px]">
+            {{-- Card --}}
+            <div class="rounded-2xl border border-gray-200 bg-white px-8 py-8 shadow-sm sm:px-10 sm:py-10">
+                {{-- Logo --}}
+                <div class="mb-8 text-center">
+                    <a href="{{ route('home') }}" class="inline-block">
+                        <img
+                            src="{{ asset('images/client/Pranala-logo-high.png') }}"
+                            alt="Pranala"
+                            class="h-16 w-auto"
+                        />
+                    </a>
                 </div>
 
-                {{-- Content --}}
-                <div class="relative z-10 mx-auto flex h-full w-full max-w-sm flex-col justify-between">
-                    {{-- Top --}}
-                    <div class="space-y-6">
-                        <div class="flex items-center gap-3 text-xs font-semibold uppercase tracking-widest text-[#f5dbe8]/90">
-                            <span class="h-px w-10 bg-white/30"></span>
-                            <span>Client Portal</span>
-                        </div>
-
-                        <div class="space-y-2">
-                            <h2 class="text-3xl font-bold leading-tight tracking-tight text-white md:text-4xl">
-                                Ticket Service Center
-                            </h2>
-                            <p class="text-lg font-light text-[#f3d8e6]">
-                                PRANALA BLMS
-                            </p>
-                        </div>
-
-                        <div class="border-l-2 border-white/30 pl-4">
-                            <p class="text-sm leading-relaxed text-[#f8e9f1]/90">
-                                Report technical issues or track your application fix progress through this portal.
-                                <br><br>
-                                <span class="font-semibold text-white">No login required.</span>
-                                Use your <span class="font-semibold text-white">Ticket Number</span> for instant and transparent access.
-                            </p>
-                        </div>
-                    </div>
-
-                    {{-- Bottom CTA --}}
-                    <div class="mt-8">
-                        <a
-                            href="{{ route('client.landing') }}"
-                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-semibold text-[#8a0b4e] shadow-lg shadow-[#8a0b4e]/20 transition hover:bg-[#f9edf3] hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#f5dbe8]"
-                        >
-                            <span>Access Service Portal</span>
-                            <x-lucide name="arrow-right" class="h-4 w-4" />
-                        </a>
-
-                        <p class="mt-3 text-xs text-[#f0cfe0]/80">
-                            *You will be redirected to the bug reporting page.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            {{-- Panel Internal (login) --}}
-            <section class="flex flex-col justify-center bg-white px-8 py-10 md:px-10 md:py-12">
-                <div class="mx-auto w-full max-w-sm">
-                    <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                        <x-lucide name="lock" class="h-4 w-4" />
-                        <span>Internal Access (Employees)</span>
-                    </div>
-
-                    <h1 class="mt-3 text-2xl font-semibold tracking-tight text-slate-900">
-                        Sign in to PRANALA BLMS
-                    </h1>
-
-                    <p class="mt-1 text-sm text-slate-600">
-                        Use your company account to access the internal dashboard.
+                {{-- Header --}}
+                <div class="mb-6">
+                    <h1 class="text-xl font-semibold text-gray-900 tracking-tight">Sign in to your account</h1>
+                    <p class="mt-2 text-sm leading-relaxed text-gray-500">
+                        Enter your credentials to access the dashboard.
                     </p>
+                </div>
 
-                    <x-auth-session-status class="mt-6" :status="session('status')" />
+                <x-auth-session-status class="mb-4" :status="session('status')" />
 
-                    <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-4">
-                        @csrf
+                <form method="POST" action="{{ route('login') }}" id="loginForm">
+                    @csrf
 
-                        <div>
-                            <x-input-label
-                                for="email"
-                                value="Email"
-                                class="text-xs font-medium text-slate-600"
-                            />
-                            <x-text-input
-                                id="email"
-                                name="email"
-                                type="email"
-                                :value="old('email')"
-                                required
-                                autofocus
-                                autocomplete="username"
-                                class="mt-2 block w-full rounded-xl px-3 py-2.5 focus:!border-[#8a0b4e] focus:!ring-[#8a0b4e]"
-                            />
-                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-                        </div>
+                    {{-- Email --}}
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
+                        <input
+                            id="email" name="email" type="email" value="{{ old('email') }}"
+                            required autofocus autocomplete="username" placeholder="you@company.com"
+                            class="block w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition focus:border-[#8a0b4e] focus:ring-1 focus:ring-[#8a0b4e]"
+                        />
+                        <x-input-error :messages="$errors->get('email')" class="mt-1.5" />
+                    </div>
 
-                        <div>
-                            <x-input-label
-                                for="password"
-                                value="Password"
-                                class="text-xs font-medium text-slate-600"
-                            />
-                            <x-text-input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
-                                autocomplete="current-password"
-                                class="mt-2 block w-full rounded-xl px-3 py-2.5 focus:!border-[#8a0b4e] focus:!ring-[#8a0b4e]"
-                            />
-                            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-                        </div>
-
-                        <label for="remember_me" class="flex items-center gap-2 pt-1 text-sm text-slate-600">
+                    {{-- Password --}}
+                    <div class="mt-4">
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                        <div class="relative">
                             <input
-                                id="remember_me"
-                                name="remember"
-                                type="checkbox"
-                                class="rounded border-slate-300 text-[#8a0b4e] shadow-sm focus:ring-[#8a0b4e]"
+                                id="password" name="password" type="password"
+                                required autocomplete="current-password" placeholder="Enter your password"
+                                class="block w-full rounded-lg border border-gray-300 px-3.5 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition focus:border-[#8a0b4e] focus:ring-1 focus:ring-[#8a0b4e]"
+                            />
+
+                            <button
+                                type="button" id="togglePw"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                                aria-label="Toggle password"
                             >
-                            <span>Remember Me</span>
+                                {{-- eye on --}}
+                                <svg data-eye="on" class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+
+                                {{-- eye off --}}
+                                <svg data-eye="off" class="h-[18px] w-[18px] hidden" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3.98 8.223A10.477 10.477 0 001.934 12c1.292 4.338 5.31 7.5 10.066 7.5.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <x-input-error :messages="$errors->get('password')" class="mt-1.5" />
+                    </div>
+
+                    {{-- Remember & (optional) Forgot --}}
+                    <div class="mt-4 flex items-center justify-between">
+                        <label for="remember_me" class="flex items-center gap-2 cursor-pointer">
+                            <input
+                                id="remember_me" name="remember" type="checkbox"
+                                {{ old('remember') ? 'checked' : '' }}
+                                class="h-4 w-4 rounded border-gray-300 text-[#8a0b4e] focus:ring-[#8a0b4e]/20"
+                            />
+                            <span class="text-sm text-gray-600">Remember me</span>
                         </label>
 
-                        <div class="space-y-1 pt-1">
-                            <div>
-                                <x-primary-button class="w-full justify-center rounded-xl py-3 text-sm normal-case tracking-normal !bg-[#8a0b4e] hover:!bg-[#730a41] focus:!bg-[#730a41] active:!bg-[#5d0834] focus:!ring-[#8a0b4e]">
-                                    Sign In
-                                </x-primary-button>
-                            </div>
+                        @if (Route::has('password.request'))
+                            <a
+                                href="{{ route('password.request') }}"
+                                class="text-xs text-gray-400 hover:text-[#8a0b4e] transition"
+                            >
+                                Forgot password?
+                            </a>
+                        @endif
+                    </div>
 
-                            @if (Route::has('password.request'))
-                                <div class="text-center">
-                                    <a
-                                        href="{{ route('password.request') }}"
-                                        class="text-xs font-medium text-slate-500 underline-offset-4 hover:text-[#8a0b4e] hover:underline"
-                                    >
-                                        Forgot password?
-                                    </a>
-                                </div>
-                            @endif
-                        </div>
-                    </form>
-                </div>
-            </section>
+                    {{-- Submit --}}
+                    <div class="mt-6">
+                        <button
+                            type="submit" id="submitBtn"
+                            class="w-full rounded-lg bg-[#8a0b4e] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#6f083f] disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            <span id="btnText">Sign in</span>
+                            <svg id="btnSpinner" class="hidden h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    {{-- Back --}}
+                    <div class="mt-3 text-center">
+                        <a
+                            href="{{ route('home') }}"
+                            class="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#8a0b4e] transition"
+                        >
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m10 19-7-7m0 0 7-7m-7 7h18"/>
+                            </svg>
+                            Back to website
+                        </a>
+                    </div>
+                </form>
+            </div>
         </div>
+
+        {{-- Copyright (tidak menempel) --}}
+        <p class="text-xs text-gray-300 text-center">
+            &copy; {{ date('Y') }} Pranala BLMS. All rights reserved.
+        </p>
     </div>
+
+    <script>
+        (function () {
+            const pw = document.getElementById('password');
+            const btn = document.getElementById('togglePw');
+            if (!pw || !btn) return;
+
+            const eyeOn = btn.querySelector('[data-eye="on"]');
+            const eyeOff = btn.querySelector('[data-eye="off"]');
+            if (!eyeOn || !eyeOff) return;
+
+            const sync = () => {
+                const isPassword = pw.type === 'password';
+                // jika password => tampilkan eyeOn, sembunyikan eyeOff
+                eyeOn.classList.toggle('hidden', !isPassword);
+                eyeOff.classList.toggle('hidden', isPassword);
+            };
+
+            btn.addEventListener('click', () => {
+                pw.type = (pw.type === 'password') ? 'text' : 'password';
+                sync();
+            });
+
+            // pastikan state awal benar (mis. setelah autofill)
+            sync();
+        })();
+
+        document.getElementById('loginForm')?.addEventListener('submit', function () {
+            const btn = document.getElementById('submitBtn');
+            btn && (btn.disabled = true);
+
+            document.getElementById('btnText')?.classList.add('hidden');
+            document.getElementById('btnSpinner')?.classList.remove('hidden');
+        });
+    </script>
 </x-guest-layout>

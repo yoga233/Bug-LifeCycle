@@ -519,45 +519,6 @@
     >
         {{-- Sisi Kiri: Detail & Komentar --}}
         <div class="space-y-8 lg:col-span-2">
-            {{-- Status & Actions --}}
-            <section 
-                class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-                x-show="status === 'Testing'"
-            >
-                <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
-                    <p class="font-mono text-[10px] font-medium uppercase tracking-[0.13em] text-slate-400">Tindakan QA</p>
-                </div>
-                <div class="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-                    <div class="p-6">
-                        <p class="text-sm font-semibold text-slate-800">Setujui Penyelesaian</p>
-                        <p class="mt-1 text-xs text-slate-500">Tandai bug ini sebagai sudah diperbaiki dengan benar.</p>
-                        <div class="mt-4">
-                            <form @submit.prevent="postJson('{{ route('qa.bugs.approve', $bug) }}')">
-                                <button
-                                    type="submit"
-                                    :disabled="submitting"
-                                    class="inline-flex h-8 w-full items-center justify-center rounded-lg bg-[#8a0b4e] px-4 text-xs font-semibold text-white transition-all duration-150 hover:bg-[#6d0940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.30)] focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <span x-show="!submitting">Selesaikan Bug (Approve)</span>
-                                    <span x-show="submitting" x-cloak>Memproses...</span>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <p class="text-sm font-semibold text-slate-800">Kembalikan (Reject)</p>
-                        <p class="mt-1 text-xs text-slate-500">Jika perbaikan belum sesuai atau muncul masalah baru.</p>
-                        <div class="mt-4">
-                            <a
-                                href="#qa-reject-form"
-                                class="inline-flex h-8 w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-xs font-medium text-slate-600 transition-all duration-150 hover:border-rose-200 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-100 focus-visible:ring-offset-1"
-                            >
-                                Berikan Alasan Penolakan
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </section>
 
             {{-- Laporan --}}
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -772,14 +733,15 @@
                                 ])->values()->toJson() }},
                             }),
                             showEmptyAlert: false,
+                            isWritingFirstComment: false,
                         }"
                         class="space-y-4"
                     >
-                        <template x-if="comments.length === 0">
+                        <template x-if="comments.length === 0 && !isWritingFirstComment">
                             <div class="py-6 text-center">
                                 <p class="text-sm text-slate-400">
                                     Belum ada komentar.
-                                    <a href="#comment-form" class="font-medium text-slate-600 underline-offset-2 transition-colors hover:text-[#8a0b4e] hover:underline">
+                                    <a href="#comment-form" @click.prevent="isWritingFirstComment = true; $nextTick(() => $refs.commentTextarea.focus())" class="font-medium text-slate-600 underline-offset-2 transition-colors hover:text-[#8a0b4e] hover:underline">
                                         Tulis komentar pertama.
                                     </a>
                                 </p>
@@ -809,7 +771,7 @@
                             </div>
                         </template>
 
-                        <div class="border-t border-slate-100 pt-5">
+                        <div class="border-t border-slate-100 pt-5" x-show="comments.length > 0 || isWritingFirstComment">
                             <form
                                 id="comment-form"
                                 method="POST"
@@ -830,8 +792,10 @@
                                     class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-300 transition-colors duration-150 focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                                     placeholder="Tulis temuan pengujian, catatan hasil validasi, atau skenario yang belum lolos…"
                                     x-model="content"
+                                    x-ref="commentTextarea"
                                     :disabled="submitting"
                                     x-on:input="if (content.trim()) showEmptyAlert = false"
+                                    @blur="if (!content.trim()) isWritingFirstComment = false"
                                 ></textarea>
 
                                 <p class="text-xs text-rose-500" x-show="showEmptyAlert" x-transition.opacity x-cloak>
@@ -861,6 +825,32 @@
 
         {{-- Sidebar --}}
         <div class="space-y-6">
+            {{-- Tindakan Utama (Approve) --}}
+            <section
+                class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                x-show="status === 'Testing'"
+            >
+                <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+                    <p class="font-mono text-[10px] font-bold uppercase tracking-[0.13em] text-slate-400">Penyelesaian</p>
+                </div>
+                <div class="p-6">
+                    <p class="text-sm font-bold text-slate-800">Setujui Perbaikan</p>
+                    <p class="mt-1 text-xs text-slate-500">Tandai bug ini sebagai sudah diperbaiki dengan benar.</p>
+                    <div class="mt-4">
+                        <form @submit.prevent="postJson('{{ route('qa.bugs.approve', $bug) }}')">
+                            <button
+                                type="submit"
+                                :disabled="submitting"
+                                class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#8a0b4e] px-4 text-[11px] font-bold uppercase tracking-widest text-white transition-all hover:bg-[#730a41] hover:shadow-lg hover:shadow-[#8a0b4e]/20 active:scale-95 disabled:opacity-50"
+                            >
+                                <span x-show="!submitting">Approve & Selesai</span>
+                                <span x-show="submitting" x-cloak>Memproses...</span>
+                                <svg x-show="!submitting" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
 
                             {{-- Secondary: Kembalikan + Catatan + Lampiran --}}
                             <form

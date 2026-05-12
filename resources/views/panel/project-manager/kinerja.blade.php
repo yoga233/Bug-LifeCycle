@@ -107,6 +107,12 @@
         background-color: #f5e8ef !important;
         color: #8a0b4e !important;
     }
+
+    /* Override global input filled style for this filter form only */
+    #pm-kinerja-filter-form input:not(:placeholder-shown) {
+        background-color: #ffffff !important;
+        border-color: #e2e8f0 !important;
+    }
 </style>
 
 {{-- ============================================================
@@ -988,7 +994,7 @@
                     const slaBreached = Math.max(0, toNumber(row.sla_breached ?? row.slaBreached ?? row.late    ?? 0));
                     const measured    = slaMet + slaBreached;
                     const rawTotal    = Math.max(0, toNumber(row.current ?? row.total ?? measured));
-                    const total       = measured > 0 ? measured : rawTotal;
+                    const total       = rawTotal;
                     return {
                         index, id: toNumber(row.id),
                         label: String(row.label ?? 'Tanpa nama'),
@@ -1039,54 +1045,59 @@
                     const rowsHtml = allRows.map((row) => {
                         const measured   = row.slaMet + row.slaBreached;
                         const compliance = measured > 0 ? (row.slaMet / measured) * 100 : 0;
-                        const base       = Math.max(1, measured);
-                        const metPct     = (row.slaMet      / base) * 100;
-                        const breachPct  = (row.slaBreached / base) * 100;
                         const totalW     = Math.max(10, (row.total / maxTotal) * 100);
                         const compClass  = measured > 0
                             ? (compliance >= 90 ? 'text-emerald-600' : compliance >= 75 ? 'text-amber-600' : 'text-rose-600')
                             : 'text-slate-400';
+                        
+                        const unmeasured = row.total - measured;
+                        const metW       = (row.slaMet / row.total) * 100;
+                        const breachedW  = (row.slaBreached / row.total) * 100;
+                        const unmeasuredW = (unmeasured / row.total) * 100;
 
                         return `
-                            <div class="grid grid-cols-[minmax(0,160px)_minmax(0,1fr)_56px] items-center gap-4 px-4 py-3">
-                                <div class="min-w-0">
-                                    <p class="truncate text-xs font-medium text-slate-700" title="${escapeHtml(row.label)}">${escapeHtml(row.label)}</p>
-                                    <p class="mt-0.5 text-[10px] text-slate-400">${numberFormatter.format(row.total)} bug</p>
-                                </div>
-                                <div class="relative">
-                                    <div class="h-7 overflow-hidden rounded-lg bg-slate-100">
-                                        <div class="flex h-full overflow-hidden rounded-lg transition-all duration-300" style="width:${totalW}%">
-                                            ${row.slaMet > 0 ? `
-                                                <div
-                                                    class="flex h-full items-center justify-center bg-emerald-500 text-[10px] font-medium text-white"
-                                                    style="width:${metPct}%"
-                                                    data-chart-tooltip
-                                                    data-tooltip-title="${escapeHtml(row.label)}"
-                                                    data-tooltip-meta="SLA Met"
-                                                    data-tooltip-value="${numberFormatter.format(row.slaMet)} bug selesai tepat waktu"
-                                                    data-tooltip-accent="#10b981"
-                                                    data-base-opacity="1"
-                                                    tabindex="0"
-                                                >${metPct >= 18 ? numberFormatter.format(row.slaMet) : ''}</div>
-                                            ` : ''}
-                                            ${row.slaBreached > 0 ? `
-                                                <div
-                                                    class="flex h-full items-center justify-center bg-rose-500 text-[10px] font-medium text-white"
-                                                    style="width:${breachPct}%"
-                                                    data-chart-tooltip
-                                                    data-tooltip-title="${escapeHtml(row.label)}"
-                                                    data-tooltip-meta="SLA Breached"
-                                                    data-tooltip-value="${numberFormatter.format(row.slaBreached)} bug melewati target"
-                                                    data-tooltip-accent="#f43f5e"
-                                                    data-base-opacity="1"
-                                                    tabindex="0"
-                                                >${breachPct >= 18 ? numberFormatter.format(row.slaBreached) : ''}</div>
-                                            ` : ''}
+                            <div class="group relative py-3 px-5 transition-colors hover:bg-slate-50/50">
+                                <div class="flex items-center justify-between gap-6">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-baseline gap-2 mb-1.5">
+                                            <h4 class="text-xs font-bold text-slate-700 truncate" title="${escapeHtml(row.label)}">${escapeHtml(row.label)}</h4>
+                                            <span class="text-[10px] text-slate-400 font-medium">${numberFormatter.format(row.total)} bug</span>
+                                        </div>
+                                        <div class="relative mt-2 h-2.5 w-full rounded-full overflow-hidden">
+                                            <div class="flex h-full transition-all duration-500 ease-out" style="width:${totalW}%">
+                                                ${row.slaMet > 0 ? `
+                                                    <div class="h-full bg-emerald-500 transition-all" style="width:${metW}%" 
+                                                        data-chart-tooltip data-tooltip-title="${escapeHtml(row.label)}" data-tooltip-meta="Tepat Waktu" data-tooltip-value="${row.slaMet} bug" data-tooltip-accent="#10b981">
+                                                    </div>
+                                                ` : ''}
+                                                ${row.slaBreached > 0 ? `
+                                                    <div class="h-full bg-rose-500 transition-all" style="width:${breachedW}%"
+                                                        data-chart-tooltip data-tooltip-title="${escapeHtml(row.label)}" data-tooltip-meta="Terlambat" data-tooltip-value="${row.slaBreached} bug" data-tooltip-accent="#f43f5e">
+                                                    </div>
+                                                ` : ''}
+                                                ${unmeasured > 0 ? `
+                                                    <div class="h-full bg-slate-300 transition-all" style="width:${unmeasuredW}%"
+                                                        data-chart-tooltip data-tooltip-title="${escapeHtml(row.label)}" data-tooltip-meta="Tanpa SLA" data-tooltip-value="${unmeasured} bug" data-tooltip-accent="#94a3b8">
+                                                    </div>
+                                                ` : ''}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="flex justify-end">
-                                    <span class="text-xs font-medium ${compClass}">${measured > 0 ? `${compliance.toFixed(0)}%` : '–'}</span>
+                                    <div class="flex items-center gap-4 shrink-0">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="flex flex-col items-end">
+                                                <div class="flex gap-1.5 text-[10px] font-bold">
+                                                    ${row.slaMet > 0 ? `<span class="text-emerald-600">${row.slaMet}</span>` : ''}
+                                                    ${row.slaBreached > 0 ? `<span class="text-rose-600">${row.slaBreached}</span>` : ''}
+                                                    ${unmeasured > 0 ? `<span class="text-slate-400">${unmeasured}</span>` : ''}
+                                                </div>
+                                            </div>
+                                            <div class="h-4 w-px bg-slate-200"></div>
+                                            <div class="w-9 text-right">
+                                                <span class="text-xs font-bold ${compClass}">${measured > 0 ? `${Math.round(compliance)}%` : '–'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -1097,6 +1108,7 @@
                             <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500">
                                 <span class="inline-flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>SLA Met</span>
                                 <span class="inline-flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-rose-500"></span>SLA Breached</span>
+                                <span class="inline-flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-slate-300"></span>Tanpa SLA</span>
                             </div>
                             <div data-chart-surface class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
                                 <div class="divide-y divide-slate-100">${rowsHtml}</div>
