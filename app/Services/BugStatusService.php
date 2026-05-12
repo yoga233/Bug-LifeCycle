@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Mail\BugStatusUpdatedMail;
 use App\Models\Bug;
 use App\Models\BugStatusHistory;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use InvalidArgumentException;
 
 class BugStatusService
@@ -117,6 +119,27 @@ class BugStatusService
                 if (!empty($qaNotifications)) {
                     Notification::insert($qaNotifications);
                 }
+            }
+
+            // ── Email notification to bug reporter (guest) ────────────────
+            // Only send for the 5 client-facing statuses: Assigned, In Progress, Testing, Resolved
+            // The initial "Reported" email is already sent from BugReportController.
+            $guestNotifiableStatuses = ['Assigned', 'In Progress', 'Testing', 'Resolved'];
+
+            if (
+                !empty($bug->guest_email)
+                && in_array($toStatus, $guestNotifiableStatuses, true)
+            ) {
+                $guestTicket = $tickets ? $tickets->fromBugId($bug->id) : 'BUG-' . $bug->id;
+                $trackingUrl = route('client.tracking', ['ticket' => $guestTicket]);
+
+                Mail::to($bug->guest_email)->queue(new BugStatusUpdatedMail(
+                    ticket:      $guestTicket,
+                    guestName:   (string) ($bug->guest_name ?? 'Reporter'),
+                    bugTitle:    (string) ($bug->title ?? ''),
+                    newStatus:   $toStatus,
+                    trackingUrl: $trackingUrl,
+                ));
             }
 
             return $bug->refresh();

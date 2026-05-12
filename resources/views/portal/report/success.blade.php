@@ -665,5 +665,17 @@
     </main>
 
     @include('portal.report.partials.task-footer')
+
+    @if ($ticket !== '')
+    <script>
+    (function () {
+        try {
+            localStorage.setItem('last_ticket', {{ Js::from($ticket) }});
+        } catch (e) {
+            // localStorage unavailable (private mode / storage quota) — silently skip
+        }
+    }());
+    </script>
+    @endif
 </body>
 </html>
