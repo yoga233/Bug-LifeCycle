@@ -43,8 +43,9 @@
         display: none;
     }
 
-    /* Soft brand background when input is filled */
-    input:not(:placeholder-shown) {
+    /* Soft brand background when input is filled — exclude report form fields
+       which have their own styling via .report-field-input-normal / -error */
+    input:not(:placeholder-shown):not(.report-field-input) {
         background-color: #fdf2f8; /* Soft brand tint (rose-50 equivalent) */
         border-color: rgba(138, 11, 78, 0.2);
     }

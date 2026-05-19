@@ -158,6 +158,10 @@ class BugValidationController extends Controller
         ]);
 
         foreach ($histories as $h) {
+            if (($events->last()['status'] ?? null) === $h->new_status) {
+                continue;
+            }
+
             $events->push([
                 'status' => $h->new_status,
                 'old_status' => $h->old_status,

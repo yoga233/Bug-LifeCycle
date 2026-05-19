@@ -136,6 +136,9 @@
         ]);
 
         foreach ($histories as $h) {
+            if (($events->last()['status'] ?? null) === $h->new_status) {
+                continue;
+            }
             $events->push([
                 'status' => $h->new_status,
                 'at'     => $h->changed_at,

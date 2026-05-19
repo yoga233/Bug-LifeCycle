@@ -202,14 +202,6 @@ class BugSeeder extends Seeder
 
     private function seedHistory(Bug $bug, ?int $assigneeId, Carbon $createdAt, array $transitionTimes): void
     {
-        BugStatusHistory::create([
-            'bug_id' => $bug->id,
-            'user_id' => null,
-            'old_status' => 'Reported',
-            'new_status' => 'Reported',
-            'changed_at' => $createdAt,
-        ]);
-
         $flow = ['Assigned' => 'Reported', 'In Progress' => 'Assigned', 'Testing' => 'In Progress', 'Rejected' => 'In Progress', 'Resolved' => 'Testing'];
 
         foreach ($transitionTimes as $newStatus => $changedAt) {

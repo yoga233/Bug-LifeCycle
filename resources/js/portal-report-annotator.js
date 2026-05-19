@@ -1741,6 +1741,8 @@ textarea.style.left = `${stageBox.left + textPosition.x * scaleX}px`;
 // Unified Frontend Validation
 // ─────────────────────────────────────────────
 
+let hasAttemptedSubmit = false;
+
 function isValidEmailAddress(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value || '').trim());
 }
@@ -1931,7 +1933,22 @@ function bindLiveValidationEvents() {
     if (input.type === 'file') return;
 
     const handler = () => {
-      validateTextField(input);
+      if (hasAttemptedSubmit) {
+        // After first submit: full re-validation so errors update live
+        validateTextField(input);
+      } else {
+        // Before submit: only clear errors when input becomes valid
+        const value = input.value.trim();
+        const isCurrentlyError = input.classList.contains('report-field-input-error');
+
+        if (isCurrentlyError && value) {
+          // Valid email check for email fields
+          if (input.type === 'email' && !isValidEmailAddress(value)) return;
+
+          setInputErrorState(input, false);
+          clearFieldError(input.dataset.errorId);
+        }
+      }
     };
 
     input.addEventListener('input', handler);
@@ -1943,7 +1960,18 @@ function bindLiveValidationEvents() {
 
     const handler = () => {
       window.requestAnimationFrame(() => {
-        validateSelectField(wrapper);
+        if (hasAttemptedSubmit) {
+          validateSelectField(wrapper);
+        } else {
+          // Before submit: only clear errors when a value is selected
+          const value = hiddenInput ? hiddenInput.value.trim() : '';
+          const isCurrentlyError = wrapper.classList.contains('report-select-wrapper-error');
+
+          if (isCurrentlyError && value) {
+            wrapper.classList.remove('report-select-wrapper-error');
+            clearFieldError(wrapper.dataset.errorId);
+          }
+        }
       });
     };
 
@@ -1972,6 +2000,7 @@ function bindLiveValidationEvents() {
 
     if (elements.form && !IS_QA) {
       elements.form.addEventListener('submit', (event) => {
+        hasAttemptedSubmit = true;
         const isValid = validateAllFields({ focusOnError: true });
 
         if (!isValid) {
