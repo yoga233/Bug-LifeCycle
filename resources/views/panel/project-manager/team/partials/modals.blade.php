@@ -28,15 +28,23 @@
 
             <div class="sm:col-span-2">
                 <x-input-label for="create_user_role" value="Role" />
-                <select id="create_user_role" name="role"
-                    class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
-                    required>
-                    @foreach($roles as $role)
-                        <option value="{{ $role->name }}" @selected(old('role') === $role->name)>
-                            {{ $role->name }}
-                        </option>
-                    @endforeach
-                </select>
+                <div class="relative mt-1">
+                    <select id="create_user_role" name="role"
+                        class="block w-full appearance-none rounded-xl border border-slate-200 bg-white pl-3 pr-10 py-2 text-sm text-slate-700 transition-colors duration-150 hover:border-[rgba(138,11,78,0.18)] hover:bg-[rgba(138,11,78,0.01)] focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
+                        required>
+                        <option value="" disabled @selected(old('role') === '')>Pilih Role</option>
+                        @foreach($roles as $role)
+                            <option value="{{ $role->name }}" @selected(old('role') === $role->name)>
+                                {{ $role->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0l-4.25-4.51a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
                 <x-input-error class="mt-2" :messages="$errors->get('role')" />
                 <p class="mt-1 text-xs text-slate-500">Tentukan akses: PM, Programmer, atau QA.</p>
             </div>
@@ -61,7 +69,7 @@
         <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
             <div class="flex items-start gap-3">
                 <input id="create_user_is_active" name="is_active" type="checkbox" value="1"
-                    class="mt-1 rounded border-slate-300 text-[#8a0b4e] focus:ring-[#f5e8ef]"
+                    class="mt-1 h-4 w-4 rounded border-slate-300 text-[#8a0b4e] focus:ring-2 focus:ring-[#8a0b4e]/20 focus:ring-offset-0 transition-colors duration-150"
                     checked>
                 <div class="min-w-0">
                     <label for="create_user_is_active" class="text-sm font-medium text-slate-900">
@@ -76,7 +84,7 @@
 
         <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <x-secondary-button
-                class="justify-center transition-colors hover:border-slate-700/20 hover:text-slate-700"
+                class="justify-center"
                 x-on:click="$dispatch('close-modal', 'create-user')"
             >Cancel</x-secondary-button>
 
@@ -107,28 +115,36 @@
                 <div class="sm:col-span-2">
                     <x-input-label for="edit_user_name_{{ $u->id }}" value="Name" />
                     <x-text-input id="edit_user_name_{{ $u->id }}" name="name" type="text"
-                        class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
+                        class="mt-1 block w-full !bg-white !border-slate-200 focus:!border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                         :value="old('name', $u->name)" required />
                 </div>
 
                 <div class="sm:col-span-2">
                     <x-input-label for="edit_user_email_{{ $u->id }}" value="Email" />
                     <x-text-input id="edit_user_email_{{ $u->id }}" name="email" type="email"
-                        class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
+                        class="mt-1 block w-full !bg-white !border-slate-200 focus:!border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
                         :value="old('email', $u->email)" required />
                 </div>
 
                 <div class="sm:col-span-2">
                     <x-input-label for="edit_user_role_{{ $u->id }}" value="Role" />
-                    <select id="edit_user_role_{{ $u->id }}" name="role"
-                        class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
-                        required>
-                        @foreach($roles as $role)
-                            <option value="{{ $role->name }}" @selected(old('role', $roleName) === $role->name)>
-                                {{ $role->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <div class="relative mt-1">
+                        <select id="edit_user_role_{{ $u->id }}" name="role"
+                            class="block w-full appearance-none rounded-xl border border-slate-200 bg-white pl-3 pr-10 py-2 text-sm text-slate-700 transition-colors duration-150 hover:border-[rgba(138,11,78,0.18)] hover:bg-[rgba(138,11,78,0.01)] focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
+                            required>
+                            <option value="" disabled>Pilih Role</option>
+                            @foreach($roles as $role)
+                                <option value="{{ $role->name }}" @selected(old('role', $roleName) === $role->name)>
+                                    {{ $role->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0l-4.25-4.51a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -136,7 +152,7 @@
                 <div class="flex items-start gap-3">
                     <input type="hidden" name="is_active" value="0" />
                     <input id="edit_user_is_active_{{ $u->id }}" name="is_active" type="checkbox" value="1"
-                        class="mt-1 rounded border-slate-300 text-[#8a0b4e] focus:ring-[#f5e8ef]"
+                        class="mt-1 h-4 w-4 rounded border-slate-300 text-[#8a0b4e] focus:ring-2 focus:ring-[#8a0b4e]/20 focus:ring-offset-0 transition-colors duration-150"
                         @checked(old('is_active', $u->is_active))>
                     <div>
                         <label for="edit_user_is_active_{{ $u->id }}" class="text-sm font-medium text-slate-900">
@@ -159,20 +175,22 @@
                     <div>
                         <x-input-label for="edit_user_password_{{ $u->id }}" value="New Password" />
                         <x-text-input id="edit_user_password_{{ $u->id }}" name="password" type="password"
-                            class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]" />
+                            class="mt-1 block w-full !bg-white !border-slate-200 focus:!border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
+                            placeholder="••••••••" />
                     </div>
 
                     <div>
                         <x-input-label for="edit_user_password_confirmation_{{ $u->id }}" value="Confirm New Password" />
                         <x-text-input id="edit_user_password_confirmation_{{ $u->id }}" name="password_confirmation" type="password"
-                            class="mt-1 block w-full focus:border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]" />
+                            class="mt-1 block w-full !bg-white !border-slate-200 focus:!border-[#8a0b4e] focus:outline-none focus:ring-2 focus:ring-[#f5e8ef]"
+                            placeholder="••••••••" />
                     </div>
                 </div>
             </div>
 
             <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <x-secondary-button
-                    class="justify-center transition-colors hover:border-slate-700/20 hover:text-slate-700"
+                    class="justify-center"
                     x-on:click="$dispatch('close-modal', 'edit-user-{{ $u->id }}')"
                 >Cancel</x-secondary-button>
 
@@ -187,43 +205,43 @@
     </x-pm.modal-form>
 
     <x-pm.modal-confirm
-    name="delete-user-{{ $u->id }}"
-    :show="($errors->any() && old('_modal') === 'delete-user-{{ $u->id }}')"
-    maxWidth="lg"
-    variant="danger"
->
-    <x-slot:title>Delete User</x-slot:title>
-    <x-slot:description>
-        Hapus user <span class="font-medium text-slate-700">{{ $u->name }}</span>?
-        Aksi ini tidak dapat dibatalkan.
-    </x-slot:description>
+        name="delete-user-{{ $u->id }}"
+        :show="($errors->any() && old('_modal') === 'delete-user-{{ $u->id }}')"
+        maxWidth="lg"
+        variant="danger"
+    >
+        <x-slot:title>Delete User</x-slot:title>
+        <x-slot:description>
+            Hapus user <span class="font-medium text-slate-700">{{ $u->name }}</span>?
+            Aksi ini tidak dapat dibatalkan.
+        </x-slot:description>
 
-    <x-slot:icon>
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-100 bg-rose-50">
-            <x-icon name="user-x" class="h-5 w-5 text-rose-500" />
-        </div>
-    </x-slot:icon>
+        <x-slot:icon>
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-100 bg-rose-50">
+                <x-icon name="user-x" class="h-5 w-5 text-rose-500" />
+            </div>
+        </x-slot:icon>
 
-    <form method="POST" action="{{ route('pm.team.users.destroy', $u) }}" class="mt-6">
-        @csrf
-        @method('DELETE')
-        <input type="hidden" name="_modal" value="delete-user-{{ $u->id }}" />
+        <form method="POST" action="{{ route('pm.team.users.destroy', $u) }}" class="mt-6">
+            @csrf
+            @method('DELETE')
+            <input type="hidden" name="_modal" value="delete-user-{{ $u->id }}" />
 
-        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <x-secondary-button
-                class="justify-center transition-colors hover:border-slate-700/20 hover:text-slate-700"
-                x-on:click="$dispatch('close-modal', 'delete-user-{{ $u->id }}')"
-            >Cancel</x-secondary-button>
+            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <x-secondary-button
+                    class="justify-center"
+                    x-on:click="$dispatch('close-modal', 'delete-user-{{ $u->id }}')"
+                >Cancel</x-secondary-button>
 
-            <button
-                type="submit"
-                class="inline-flex h-9 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-5 text-xs font-medium text-rose-600 transition-colors duration-200 hover:border-rose-300 hover:bg-rose-100 hover:text-rose-700"
-            >
-                Delete User
-            </button>
-        </div>
-    </form>
-</x-pm.modal-confirm>
+                <button
+                    type="submit"
+                    class="inline-flex h-9 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-5 text-xs font-medium text-rose-600 transition-colors duration-200 hover:border-rose-300 hover:bg-rose-100 hover:text-rose-700"
+                >
+                    Delete User
+                </button>
+            </div>
+        </form>
+    </x-pm.modal-confirm>
 @endforeach
 
 {{-- Create Project Modal --}}
@@ -276,7 +294,7 @@
 
         <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <x-secondary-button
-                class="justify-center transition-colors hover:border-slate-700/20 hover:text-slate-700"
+                class="justify-center"
                 x-on:click="$dispatch('close-modal', 'create-project')"
             >
                 Cancel
@@ -332,7 +350,7 @@
 
             <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <x-secondary-button
-                    class="justify-center transition-colors hover:border-slate-700/20 hover:text-slate-700"
+                    class="justify-center"
                     x-on:click="$dispatch('close-modal', 'edit-project-{{ $p->id }}')"
                 >Cancel</x-secondary-button>
 
@@ -358,6 +376,12 @@
             Aksi ini tidak dapat dibatalkan.
         </x-slot:description>
 
+        <x-slot:icon>
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-100 bg-rose-50">
+                <x-icon name="trash-2" class="h-5 w-5 text-rose-500" />
+            </div>
+        </x-slot:icon>
+
         <form method="POST" action="{{ route('pm.team.projects.destroy', $p) }}" class="mt-6">
             @csrf
             @method('DELETE')
@@ -365,7 +389,7 @@
 
             <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <x-secondary-button
-                    class="justify-center transition-colors hover:border-slate-700/20 hover:text-slate-700"
+                    class="justify-center"
                     x-on:click="$dispatch('close-modal', 'delete-project-{{ $p->id }}')"
                 >Cancel</x-secondary-button>
 

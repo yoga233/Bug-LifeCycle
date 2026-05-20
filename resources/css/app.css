@@ -45,12 +45,37 @@
 
     /* Soft brand background when input is filled — exclude report form fields
        which have their own styling via .report-field-input-normal / -error */
-    input:not(:placeholder-shown):not(.report-field-input) {
-        background-color: #fdf2f8; /* Soft brand tint (rose-50 equivalent) */
+    input:not([type="checkbox"]):not([type="radio"]):not(:placeholder-shown):not(.report-field-input) {
+        background-color: #fdf2f8;
         border-color: rgba(138, 11, 78, 0.2);
     }
 }
 
+/* ==========================================================================
+   MENGATASI WARNA AUTOFILL BROWSER (CHROME, EDGE, SAFARI, FIREFOX)
+   ========================================================================== */
+
+/* Menimpa warna biru/kuning bawaan autofill browser */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    /* 1. Gunakan shadow dalam (inset) untuk menutup warna biru browser dengan warna brand pink Anda (#fdf2f8) */
+    -webkit-box-shadow: 0 0 0 1000px #fdf2f8 inset !important;
+    
+    /* 2. Atur warna teks agar tetap gelap/kontras sesuai standar desain (slate-800) */
+    -webkit-text-fill-color: #1e293b !important;
+    
+    /* 3. Atur warna border agar tetap warna brand pink Anda */
+    border-color: rgba(138, 11, 78, 0.2) !important;
+}
+
+/* Dukungan untuk spesifikasi standar CSS modern */
+input:autofill {
+    background-color: #fdf2f8 !important;
+    color: #1e293b !important;
+    border-color: rgba(138, 11, 78, 0.2) !important;
+}
 
 
 @layer components {

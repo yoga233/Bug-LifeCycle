@@ -58,10 +58,10 @@
     <button
         type="button"
         @click="open = !open"
-        class="inline-flex h-9 w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(138,11,78,0.20)] focus-visible:ring-offset-1"
+        class="inline-flex h-9 w-full items-center justify-between gap-2 rounded-xl border bg-white px-3 text-xs transition-colors duration-150 focus:outline-none focus:border-[rgba(138,11,78,0.35)] focus:ring-2 focus:ring-[rgba(138,11,78,0.10)]"
         :class="open
             ? 'border-[rgba(138,11,78,0.35)] ring-2 ring-[rgba(138,11,78,0.10)]'
-            : 'hover:border-[rgba(138,11,78,0.18)] hover:bg-[rgba(138,11,78,0.01)]'"
+            : 'border-slate-200 hover:border-[rgba(138,11,78,0.18)] hover:bg-[rgba(138,11,78,0.01)]'"
     >
         <span
             class="truncate"

@@ -149,7 +149,7 @@
                         type="text"
                         value="{{ $filters['q'] ?? '' }}"
                         placeholder="Judul atau #BUG-3FTNOD"
-                        class="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-800 placeholder:text-slate-400 transition-all duration-150 focus:border-[rgba(138,11,78,0.35)] focus:outline-none focus:ring-2 focus:ring-[rgba(138,11,78,0.10)]"
+                        class="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-800 placeholder:text-slate-400 transition-colors duration-150 focus:border-[rgba(138,11,78,0.35)] focus:outline-none focus:ring-2 focus:ring-[rgba(138,11,78,0.10)]"
                     />
                 </div>
 
@@ -326,9 +326,8 @@
 
                                 {{-- Reporter --}}
                                 <span class="inline-flex items-center gap-1 text-slate-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                         class="h-3.5 w-3.5 text-slate-400" aria-hidden="true">
-                                        <path d="M10 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm-5.5 6.25A4.75 4.75 0 0 1 9.25 11.5h1.5a4.75 4.75 0 0 1 4.75 4.75.75.75 0 0 1-.75.75h-9.5a.75.75 0 0 1-.75-.75Z" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="h-3.5 w-3.5 text-slate-400" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                                     </svg>
                                     {{ $bug->guest_name }}
                                 </span>
@@ -337,12 +336,9 @@
 
                                 {{-- Project --}}
                                 <span class="inline-flex items-center gap-1 text-slate-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                         class="h-3.5 w-3.5 text-slate-400" aria-hidden="true">
-                                        <path fill-rule="evenodd"
-                                              d="M4.25 2A2.25 2.25 0 0 0 2 4.25v11.5A2.25 2.25 0 0 0 4.25 18h11.5A2.25 2.25 0 0 0 18 15.75V4.25A2.25 2.25 0 0 0 15.75 2H4.25Zm4.03 6.28a.75.75 0 0 0-1.06-1.06L4.97 9.47a.75.75 0 0 0 0 1.06l2.25 2.25a.75.75 0 0 0 1.06-1.06L6.56 10l1.72-1.72Zm4.5-1.06a.75.75 0 1 0-1.06 1.06L13.44 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06l2.25-2.25a.75.75 0 0 0 0-1.06l-2.25-2.25Z"
-                                              clip-rule="evenodd" />
-                                    </svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="h-3.5 w-3.5 text-slate-400" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                                </svg>
                                     {{ $bug->project?->name ?? '—' }}
                                 </span>
 
@@ -350,30 +346,31 @@
 
                                 {{-- Date --}}
                                 <span class="inline-flex items-center gap-1 text-slate-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                         class="h-3.5 w-3.5 text-slate-400" aria-hidden="true">
-                                        <path fill-rule="evenodd"
-                                              d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2Zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75Z"
-                                              clip-rule="evenodd" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="h-3.5 w-3.5 text-slate-400" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                     </svg>
                                     {{ $dateDisplay }}
                                 </span>
 
                                 <span class="text-slate-300" aria-hidden="true">·</span>
 
-                                {{-- Assignee --}}
-                                <span class="inline-flex items-center gap-1 {{ $isUnassigned ? 'text-amber-600' : 'text-slate-500' }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                         class="h-3.5 w-3.5 {{ $isUnassigned ? 'text-amber-400' : 'text-slate-400' }}" aria-hidden="true">
-                                        @if ($isUnassigned)
-                                            <path d="M10 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm-5.5 6.25A4.75 4.75 0 0 1 9.25 11.5h1.5a4.75 4.75 0 0 1 4.75 4.75.75.75 0 0 1-.75.75h-9.5a.75.75 0 0 1-.75-.75Z" />
-                                            <path fill-rule="evenodd"
-                                                  d="M16.5 7.75a.75.75 0 0 0-1.5 0v.5h-.5a.75.75 0 0 0 0 1.5h.5v.5a.75.75 0 0 0 1.5 0v-.5h.5a.75.75 0 0 0 0-1.5h-.5v-.5Z"
-                                                  clip-rule="evenodd" />
-                                        @else
-                                            <path d="M10 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm-5.5 6.25A4.75 4.75 0 0 1 9.25 11.5h1.5a4.75 4.75 0 0 1 4.75 4.75.75.75 0 0 1-.75.75h-9.5a.75.75 0 0 1-.75-.75Z" />
-                                        @endif
-                                    </svg>
+                                {{-- Assignee --}}{{-- Assignee (Penanggung Jawab) --}}
+                                <span class="inline-flex items-center gap-1.5 {{ $isUnassigned ? 'text-amber-600' : 'text-slate-500' }}">
+                                    @if ($isUnassigned)
+                                        {{-- Ikon User Plus Outline Resmi Lucide --}}
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 text-amber-400" aria-hidden="true">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                            <circle cx="9" cy="7" r="4" />
+                                            <line x1="19" x2="19" y1="8" y2="14" />
+                                            <line x1="22" x2="16" y1="11" y2="11" />
+                                        </svg>
+                                    @else
+                                        {{-- Ikon User Outline Resmi Lucide --}}
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 text-slate-400" aria-hidden="true">
+                                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                                            <circle cx="12" cy="7" r="4" />
+                                        </svg>
+                                    @endif
 
                                     @if ($isUnassigned)
                                         <span class="font-medium">Belum ditugaskan</span>
